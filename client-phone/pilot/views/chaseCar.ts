@@ -1,8 +1,10 @@
 /** Compose la silhouette et la traînée de la voiture suivie au premier plan. */
 
+import type { PilotTheme } from '../themes/theme.js';
+
 /** Dessine la voiture de poursuite après tous les objets du monde. */
 export function drawChaseCar(ctx: CanvasRenderingContext2D, w: number, h: number,
-  y: number, color: string, steer: number, boosting: boolean): void {
+  y: number, color: string, steer: number, boosting: boolean, theme: PilotTheme): void {
   const size = Math.min(w * .22, h * .29);
   ctx.save();
   ctx.translate(w / 2, y);
@@ -32,9 +34,9 @@ export function drawChaseCar(ctx: CanvasRenderingContext2D, w: number, h: number
   ctx.lineTo(size * .5, -size * .12);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = '#263642';
+  ctx.fillStyle = theme.material;
   ctx.fillRect(-size * .26, -size * .57, size * .52, size * .2);
-  ctx.fillStyle = '#f56b71';
+  ctx.fillStyle = theme.lights;
   ctx.fillRect(-size * .45, -size * .25, size * .2, size * .09);
   ctx.fillRect(size * .25, -size * .25, size * .2, size * .09);
   ctx.restore();

@@ -34,7 +34,8 @@ export function createMessageHandler(app: TableApp, hooks: MessageHooks): (msg: 
         const prev = view.state;
         view.state = sync.apply(msg.state, msg.t);
         gestures.syncState();
-        // L'ambiance est une préférence locale sûre : elle reste disponible pendant les séances publiques.
+        // L'ambiance de la séance suit la table qui vient de modifier le choix.
+        if (view.state.theme !== view.theme) selectTheme(view.state.theme, false);
         document.getElementById('theme-settings')!.hidden=false;
         if(!prev&&view.state.developerTools){view.debug.on=urlParams.get('debug')==='1';applyTuning(location.search);try{selectTheme(loadTheme(window.localStorage));}catch{/* Keep Ferraille. */}}
         if(!view.state.developerTools){view.debug.on=false;simBar.remove();testBar.remove();}

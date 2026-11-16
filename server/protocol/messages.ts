@@ -6,6 +6,7 @@
 import type { TangibleId } from '../tangibles/tangibles.js';
 import type { Vec2, Team, Phase, ItemKind, Difficulty, TangiblePlacementMode, Tangible, GameState } from './gameState.js';
 
+import type { ThemeId } from './theme.js';
 import type { BaseMsg } from './messageEnvelope.js';
 import type {
   JoinMsg, LeaveMsg, JoinedMsg, JoinRejectedMsg, LeftMsg, SetAccessibilityMsg, RemotePlaceMsg, PlacementResultMsg,
@@ -17,6 +18,12 @@ export type {
 } from './playerMessages.js';
 
 // Table → Server
+/** Partage l'ambiance choisie sur la table avec les téléphones. */
+export interface SetThemeMsg extends BaseMsg {
+  type: 'SetTheme';
+  theme: ThemeId;
+}
+
 /** Décrit le réglage de course dans le protocole partagé. */
 export interface RaceSettingsMsg extends BaseMsg {
   type: 'RaceSettings'; difficulty?: Difficulty; lapsToWin?: number; sessionMaxSeconds?: number;
@@ -237,6 +244,7 @@ export type ClientMessage =
   | LeaveMsg
   | SetAccessibilityMsg
   | RemotePlaceMsg
+  | SetThemeMsg
   | RaceSettingsMsg
   | StrokeDrawMsg
   | GenerateTrackMsg

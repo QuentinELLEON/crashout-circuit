@@ -3,6 +3,7 @@
  * Liens : server/net/GameServer.ts, server/rules/GameRules.ts.
  */
 import type { ClientMessage, Team } from '../types.js';
+import { isThemeId } from '../protocol/theme.js';
 import { isPhoneStation } from '../tableStations.js';
 import type { GameRules } from '../rules/GameRules.js';
 
@@ -10,6 +11,12 @@ import type { GameRules } from '../rules/GameRules.js';
 export function handleTableSession(rules: GameRules, msg: ClientMessage): void {
   const { phase, developerTools } = rules.state;
   switch (msg.type) {
+    case 'SetTheme':
+      if (isThemeId(msg.theme) && rules.state.theme !== msg.theme) {
+        rules.state.theme = msg.theme;
+        rules.host.broadcastFull();
+      }
+      break;
     case 'RaceSettings':
       rules.updateRaceSettings(msg);
       break;

@@ -9,7 +9,7 @@ import type { TableApp } from './tableApp.js';
 /** Construit les aperçus de thème, applique l'ambiance Ferraille et suit la préférence de mouvement du navigateur. */
 export function setupDisplayPreferences(app: TableApp): { selectTheme: (id: ThemeId, persist?: boolean) => void } {
   const { canvas, view, urlParams } = app;
-  // Themes are a local display setting: switching never sends a command or restarts a race.
+  // Le serveur synchronise le choix sans redémarrer la course.
   const themeOptions = document.getElementById('theme-options')!;
   // Construit les aperçus de thèmes conservés dans les paramètres de développement.
   for (const theme of THEMES) {
@@ -24,7 +24,12 @@ export function setupDisplayPreferences(app: TableApp): { selectTheme: (id: Them
   }
   /** Applique la palette aux couches Canvas et aux paramètres HTML sans redémarrer la partie. */
   function selectTheme(id: ThemeId, persist=true): void {
-    view.theme = id; try { if(persist)saveTheme(window.localStorage, id); } catch { /* Display preference still applies. */ }
+    if (persist) {
+      try { saveTheme(window.localStorage, id); } catch { /* L'écran reste utilisable. */ }
+      app.sendTable({ type: 'SetTheme', theme: id });
+      return;
+    }
+    view.theme = id;
     document.body.dataset.theme = id; canvas.dataset.theme = id;
     const look=themeLook(id);
     for(const [key,value] of Object.entries(look))document.body.style.setProperty(`--look-${key}`,typeof value==='number'?`${value}px`:value);

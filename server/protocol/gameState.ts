@@ -4,6 +4,7 @@
  * Réexporté par server/types.ts, qui reste le point d'import unique des types partagés.
  */
 import type { TangibleId } from '../tangibles/tangibles.js';
+import type { ThemeId } from './theme.js';
 
 /** Représente une position ou un vecteur à deux coordonnées. */
 export interface Vec2 {
@@ -256,6 +257,7 @@ export interface GameState {
   seats: Record<SeatId, Seat>;
   /** Circuit élargi réservé au début de la manche lorsque les quatre joueurs sont sur téléphone. */
   wideTable: boolean;
+  theme: ThemeId;
   tick: number;
   cars: Record<Team, Car>;
   walls: Wall[];

@@ -3,6 +3,7 @@ import type { GameState, Team } from '../../../server/types.js';
 import { LOGICAL_H, LOGICAL_W } from '../../../server/layout.js';
 import { RaceMap } from '../../../client-shared/raceMap/RaceMap.js';
 import type { MapCamera } from '../../../client-shared/raceMap/camera2d.js';
+import { pilotTheme } from '../themes/theme.js';
 import type { CarPose } from '../../../client-shared/raceMap/objects2d.js';
 
 export class PeripheralView {
@@ -21,6 +22,6 @@ export class PeripheralView {
       center: own.pos, width: w, height: h,
       scale: Math.max(w, h) / 1200, rotation: this.headingUp ? -own.angle - Math.PI / 2 : 0,
     };
-    this.map.draw(ctx, camera, state, poses, now, team);
+    this.map.draw(ctx, camera, state, poses, now, team, pilotTheme(state.theme).map);
   }
 }
