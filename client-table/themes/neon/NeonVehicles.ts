@@ -17,7 +17,7 @@ type Ctx = CanvasRenderingContext2D;
 /** Dessine les voitures, leurs réacteurs et leurs traînées pour les cinq thèmes, sans calculer leur physique. */
 export class NeonVehicles {
   /** Conserve le thème et la mémoire commune des voitures tombées pour leurs changements de présentation. */
-  constructor(private theme: ThemeId = 'neon', private fallen = new Set<Team>()) {}
+  constructor(private theme: Exclude<ThemeId, 'retro'> = 'neon', private fallen = new Set<Team>()) {}
   private bodies = new Map<Team, HTMLCanvasElement>();
   private trails = { A: new TrailBuffer(), B: new TrailBuffer() };
   /** Compte les échantillons de trajectoire encore conservés pour les deux voitures. */

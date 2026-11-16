@@ -10,7 +10,7 @@ export { THEMES, themeLook } from '../../client-shared/theme/looks.js';
 export type { ThemeId } from '../../server/types.js';
 
 /** Distingue les trois thèmes qui utilisent le même moteur de chaussée et de décor. */
-export type CircuitTheme = Exclude<ThemeId, 'neon' | 'scrap'>;
+export type CircuitTheme = Exclude<ThemeId, 'neon' | 'scrap' | 'retro'>;
 export const THEME_STORAGE_KEY = 'crashout.visual-theme.v2';
 /** Retrouve un identifiant de thème valide et choisit Ferraille en cas de valeur inconnue. */
 export function themeId(value: unknown): ThemeId { return THEMES.find(/* Retrouve la définition dont l’identifiant correspond à la préférence enregistrée. */ t => t.id === value)?.id ?? 'scrap'; }

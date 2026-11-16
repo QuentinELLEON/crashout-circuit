@@ -1,4 +1,5 @@
 /** Partage les matériaux et les palettes des ambiances de table et de téléphone. */
+import { RETRO } from './retroPalette.js';
 import type { ThemeId } from '../../server/types.js';
 
 // Associe chaque thème à son nom français et à ses couleurs d’aperçu.
@@ -8,6 +9,7 @@ export const THEMES = [
   { id: 'toy', name: 'Circuit miniature', detail: 'Miniatures · atelier · plastique', colors: ['#17686d', '#ffb82e', '#f86445'] },
   { id: 'classic', name: 'Grand Prix', detail: 'Asphalte · vibreurs · paddock', colors: ['#355a48', '#e9544d', '#e9e9df'] },
   { id: 'mayhem', name: 'Castagne', detail: 'Festival · boue · castagne', colors: ['#3c3029', '#a45f3b', '#ffc16b'] },
+  { id: 'retro', name: 'Rétro', detail: 'Karting 64 bits · fausse 3D', colors: [RETRO.grass, RETRO.red, RETRO.sky] },
 ] as const satisfies readonly { id: ThemeId; name: string; detail: string; colors: readonly string[] }[];
 
 /** Cyan/pink identify players in every world; these colours identify materials and feedback. */
@@ -18,6 +20,8 @@ const LOOKS = {
   toy:     { top: '#285260', panel: '#163c4c', bottom: '#102c3c', line: '#8bced1', button: '#0c2c40', ink: '#fff8e4', accent: '#ffcf48', electric: '#b9a0ff', material: '#ed9641', radius: 25 },
   classic: { top: '#303c40', panel: '#202a2e', bottom: '#161f23', line: '#91a6a5', button: '#101d24', ink: '#f4f2e8', accent: '#f1ce59', electric: '#9abfff', material: '#d3d5cf', radius: 8 },
   mayhem:  { top: '#4b3f34', panel: '#2d2924', bottom: '#1d1f1c', line: '#8d765b', button: '#1c211f', ink: '#f4e5cb', accent: '#ffbc68', electric: '#a7ddeb', material: '#785740', radius: 5 },
+  retro: { top: RETRO.rock, panel: RETRO.panel, bottom: RETRO.night, line: RETRO.light, button: RETRO.dark,
+    ink: RETRO.ink, accent: RETRO.yellow, electric: RETRO.lilac, material: RETRO.asphaltLight, radius: 4 },
 } as const;
 /** Renvoie la palette et les dimensions visuelles communes au thème demandé. */
 export function themeLook(id: ThemeId) { return LOOKS[id]; }

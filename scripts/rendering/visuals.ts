@@ -397,7 +397,7 @@ for (const theme of THEMES) /* Vérifie la réutilisation du revêtement statiqu
   for (let i = 0; i < 100; i++) renderer.render(view);
   assert.equal(renderer.stats.trackBuilds, 3); assert.equal(renderer.stats.trailPoints, points);
   surface.width = 3840; surface.height = 2160; renderer.render(view);
-  assert.equal(renderer.stats.trackBuilds, 4, 'resize updates the cached deck resolution');
+  assert.equal(renderer.stats.trackBuilds, theme.id === 'retro' ? 3 : 4, 'only the Rétro deck uses a fixed resolution');
 });
 /** Vérifie le nettoyage des trajectoires lors d’un changement de session et en animations réduites. */
 test('reduced motion and new game clear trajectory history', () => {

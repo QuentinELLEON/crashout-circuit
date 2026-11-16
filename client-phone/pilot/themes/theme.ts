@@ -18,10 +18,11 @@ export interface PilotTheme {
   lights: string;
 }
 
-const motif: Record<ThemeId, Motif> = {
+type ClassicPaletteId = Exclude<ThemeId, 'retro'>;
+const motif: Record<ClassicPaletteId, Motif> = {
   neon: 'column', scrap: 'pipes', toy: 'blocks', classic: 'stands', mayhem: 'tents',
 };
-const terrain: Record<ThemeId, { sky: [string, string]; ground: [string, string]; road: [string, string] }> = {
+const terrain: Record<ClassicPaletteId, { sky: [string, string]; ground: [string, string]; road: [string, string] }> = {
   neon:    { sky: ['#050611', '#182544'], ground: ['#121d33', '#090e20'], road: ['#1a293d', '#24364e'] },
   scrap:   { sky: ['#20333d', '#8fa0a1'], ground: ['#677a79', '#253137'], road: ['#45545b', '#536168'] },
   toy:     { sky: ['#276c80', '#a7d4ce'], ground: ['#5e9d9b', '#17686d'], road: ['#164e60', '#236577'] },
@@ -30,7 +31,7 @@ const terrain: Record<ThemeId, { sky: [string, string]; ground: [string, string]
 };
 
 /** Construit la palette une fois, à partir du même thème que la table. */
-function descriptor(id: ThemeId): PilotTheme {
+function descriptor(id: ClassicPaletteId): PilotTheme {
   const look = themeLook(id);
   const preview = THEMES.find(theme => theme.id === id)!.colors;
   const colors = terrain[id];
@@ -44,7 +45,7 @@ function descriptor(id: ThemeId): PilotTheme {
   };
 }
 
-const descriptors = new Map<ThemeId, PilotTheme>(THEMES.map(({ id }) => [id, descriptor(id)]));
+const descriptors = new Map<ThemeId, PilotTheme>(THEMES.flatMap(({ id }) => id === 'retro' ? [] : [[id, descriptor(id)] as const]));
 
 /** Retombe sur Ferraille lorsqu'un serveur annonce une ambiance inconnue. */
 export function pilotTheme(id: string | undefined): PilotTheme {

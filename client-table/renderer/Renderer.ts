@@ -13,6 +13,7 @@ import { type Icon } from '../ui/icons.js';
 import { drawTutorial } from '../ui/TutorialOverlay.js';
 import { TangibleTransitions } from '../ui/TangibleTransitions.js';
 import { playFeedback } from '../sound/Sound.js';
+import { RetroWorld } from '../themes/retro/RetroWorld.js';
 import { ScrapBackdrop } from '../themes/scrap/ScrapBackdrop.js';
 import { ScrapTrack } from '../themes/scrap/ScrapTrack.js';
 import { themeLook, type ThemeId, type CircuitTheme } from '../themes/themes.js';
@@ -41,6 +42,8 @@ export { START_TABLE_BUTTON, START_PC_BUTTON, START_TUTORIAL_BUTTON, START_TANGI
 
 export class Renderer {
   hud = new HUD();
+
+  private retroWorld: RetroWorld | null = null;
 
   lobbyJoin: LobbyJoin | null = null;
 
@@ -89,7 +92,7 @@ export class Renderer {
 
   /** Expose les compteurs de caches et de trajectoires utilisés pour les diagnostics de rendu. */
   get stats(): { trackBuilds: number; trailPoints: number } {
-    return { trackBuilds: this.track.builds + this.scrapTrack.builds + [...this.worlds.values()].reduce(/* Additionne les constructions de revêtement des trois thèmes de circuit supplémentaires. */ (n,w)=>n+w.track.builds,0), trailPoints: this.theme === 'scrap' ? this.scrapVehicles.trailPoints : this.theme === 'neon' ? this.vehicles.trailPoints : this.world(this.theme).vehicles.trailPoints };
+    return { trackBuilds: (this.retroWorld?.track.builds ?? 0) + this.track.builds + this.scrapTrack.builds + [...this.worlds.values()].reduce(/* Additionne les constructions de revêtement des trois thèmes de circuit supplémentaires. */ (n,w)=>n+w.track.builds,0), trailPoints: this.theme === 'retro' ? 0 : this.theme === 'scrap' ? this.scrapVehicles.trailPoints : this.theme === 'neon' ? this.vehicles.trailPoints : this.world(this.theme).vehicles.trailPoints };
   }
 
   /** Compose les couches de l’écran correspondant à la phase sans modifier les règles de la partie. */
@@ -98,7 +101,9 @@ export class Renderer {
     const ctx = this.ctx;
     if (this.theme !== view.theme) { this.vehicles.clearTrails(); this.scrapVehicles.clearTrails(); for(const w of this.worlds.values())w.vehicles.clearTrails(); this.theme = view.theme; }
     const industrial = this.theme === 'scrap';
-    const world = this.theme !== 'neon' && this.theme !== 'scrap' ? this.world(this.theme) : null;
+    if (this.theme === 'retro') this.retroWorld ??= new RetroWorld();
+    const retro = this.theme === 'retro' ? this.retroWorld : null;
+    const world = this.theme !== 'neon' && this.theme !== 'scrap' && this.theme !== 'retro' ? this.world(this.theme) : null;
     const look = themeLook(this.theme);
     const building = state && presentingTrack(state,view.now()) && state.track && state.trackPresentation;
     const buildFrame = building ? presentationFrame(building,view.now()) : null;
@@ -108,7 +113,8 @@ export class Renderer {
     if (state) this.transitions.update(state, view.visualTime);
     this.reducedMotion = view.reducedMotion;
     this.time = view.visualTime;
-    if(world)world.backdrop.draw(ctx,this.time,view.reducedMotion,state?.phase==='MAP',state?.track??null,state?.phase==='LOBBY'?'lobby':state?.phase==='MAP'?'map':'race',buildFrame?.reveal??1);
+    if (retro) retro.drawBackground(ctx, state);
+    else if(world)world.backdrop.draw(ctx,this.time,view.reducedMotion,state?.phase==='MAP',state?.track??null,state?.phase==='LOBBY'?'lobby':state?.phase==='MAP'?'map':'race',buildFrame?.reveal??1);
     else (industrial?this.scrapBackdrop:this.backdrop).draw(ctx,this.time,view.reducedMotion,state?.phase==='MAP');
     if (!state) return;
 
@@ -121,24 +127,17 @@ export class Renderer {
       vehicles.clear();
       /** Fournit à la révélation le revêtement du thème sans y dessiner le départ final trop tôt. */
       this.creation.draw(ctx,state.track,state.trackVersion,building,now,this.reducedMotion,look.accent,view.strokes.values(),
-        ()=>track.draw(ctx,state.track!,state.trackVersion,this.time,this.reducedMotion,false));
-      if(buildFrame?.stage==='lock')for(const team of ['A','B'] as const)vehicles.draw(ctx,state.cars[team],this.time,now,this.reducedMotion,[]);
+        () => retro ? retro.drawTrack(ctx, state, false)
+          : track.draw(ctx, state.track!, state.trackVersion, this.time, this.reducedMotion, false));
+      if(!retro && buildFrame?.stage==='lock')for(const team of ['A','B'] as const)vehicles.draw(ctx,state.cars[team],this.time,now,this.reducedMotion,[]);
       return;
     }
-    // Course : piste, objets, voitures, retours visuels, puis postes et tutoriel.
-    if (state.track) track.draw(ctx, state.track, state.trackVersion, this.time, this.reducedMotion);
-    vehicles.drawTrails(ctx, state, this.time, now, this.reducedMotion);
-    objects.drawPickups(ctx, state, this.time, this.reducedMotion);
-    objects.drawGates(ctx, state, now, this.time, this.reducedMotion);
-    this.transitions.draw(ctx, this.time, this.reducedMotion, look.electric);
-    objects.drawWalls(ctx, state, now, this.time, this.reducedMotion);
-    objects.drawArcs(ctx, state, now, this.time, this.reducedMotion);
-    objects.drawPylons(ctx, state, this.time, this.reducedMotion);
-    this.transitions.drawActivation(ctx, this.time, this.reducedMotion, look.electric);
-    this.drawStones(ctx, state, now);
-    for (const t of ['A', 'B'] as Team[]) vehicles.draw(ctx, state.cars[t], this.time, now, this.reducedMotion, view.effects);
+    if (retro) {
+      retro.drawRace(ctx, state, view, now, this.fallen);
+      this.drawStones(ctx, state, now);
+    } else this.drawRaceWorld(ctx, state, view, now, track, vehicles, objects);
     this.drawRespawnLights(ctx,state,now);
-    this.effects.draw(ctx, view);
+    if (!retro) this.effects.draw(ctx, view);
     this.drawSling(ctx, state, view.sling);
     drawTangibleTouchPreview(ctx, view);
     this.drawExpectedBonus(ctx,state);
@@ -152,6 +151,25 @@ export class Renderer {
     if (state.phase === 'RESULT') this.drawResult(ctx, state);
     drawTutorial(ctx, state, this.reducedMotion ? 0 : this.time, DRIVE_MODE_BUTTONS);
 
+  }
+
+  /** Dessine les couches animées des ambiances à pleine résolution. */
+  private drawRaceWorld(ctx: Ctx, state: GameState, view: View, now: number,
+    track: NeonTrack | ScrapTrack | CircuitTrack, vehicles: NeonVehicles, objects: NeonObjects): void {
+    const electric = themeLook(this.theme).electric;
+    if (state.track) track.draw(ctx, state.track, state.trackVersion, this.time, this.reducedMotion);
+    vehicles.drawTrails(ctx, state, this.time, now, this.reducedMotion);
+    objects.drawPickups(ctx, state, this.time, this.reducedMotion);
+    objects.drawGates(ctx, state, now, this.time, this.reducedMotion);
+    this.transitions.draw(ctx, this.time, this.reducedMotion, electric);
+    objects.drawWalls(ctx, state, now, this.time, this.reducedMotion);
+    objects.drawArcs(ctx, state, now, this.time, this.reducedMotion);
+    objects.drawPylons(ctx, state, this.time, this.reducedMotion);
+    this.transitions.drawActivation(ctx, this.time, this.reducedMotion, electric);
+    this.drawStones(ctx, state, now);
+    for (const team of ['A', 'B'] as const) {
+      vehicles.draw(ctx, state.cars[team], this.time, now, this.reducedMotion, view.effects);
+    }
   }
 
   /** Affiche les feux rouges puis verts au-dessus des voitures réparées avant leur reprise. */

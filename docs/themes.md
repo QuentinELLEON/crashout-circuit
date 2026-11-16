@@ -69,3 +69,7 @@ Une planche comparative en navigateur a servi à vérifier la composition des tr
 4. Conduire les deux équipes, accélérer et déclencher les objets : les couleurs d’équipe, la direction des véhicules et les dangers doivent rester lisibles. Depuis Oz, déplacer/activer/désactiver les tangibles et observer les effets correspondants.
 5. Observer chaque fond pendant 10 secondes : portique et hélices pour Toy Circuit, drapeaux/public/nuages pour F1 Classic, scène/gerbes/soudures/poussière pour Mayhem, machines et énergie pour Ferraille. Mettre en pause : ambiance, LED et effets sont figés. Reprendre puis essayer `?motion=0` : le décor s’immobilise et les traces disparaissent, la conduite reste possible.
 6. Sur la table, vérifier la lecture à distance et la fluidité avec quatre joueurs ; F3 affiche les mesures locales.
+
+## Rétro
+
+La table affiche des karts à seize orientations et une piste pixelisée. Le décor et les objets sont dessinés dans une surface de 480 × 270. Les textes et commandes gardent la résolution de la table. Le style est d’inspiration générique. Aucune ressource ni aucun élément d’une licence existante n’est utilisé.

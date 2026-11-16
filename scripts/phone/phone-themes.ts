@@ -14,7 +14,7 @@ assert.equal(pilotTheme(undefined).id, 'scrap');
 const track = generatePreset();
 for (const { id } of THEMES) {
   const theme = pilotTheme(id);
-  assert.equal(theme.id, id);
+  assert.equal(theme.id, id === 'retro' ? 'scrap' : id);
   assert.ok(theme.sky.every(Boolean) && theme.ground.every(Boolean) && theme.road.edge.every(Boolean) && theme.motif);
 }
 const decor = generateSceneDecor(track, 42, 75);
