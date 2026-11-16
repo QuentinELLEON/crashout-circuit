@@ -58,3 +58,10 @@ button.choice small { margin-inline-start: auto; color: var(--muted); text-align
 .pilot-viewport .detail:empty { display: none; }
 .view-caption { flex: 1 1 100%; color: var(--muted); font-size: .9rem; }
 .pilot-viewport canvas.immobilized { filter: grayscale(1); }
+.copilot-screen, .tangible-cards { display: grid; gap: .65rem; }
+.copilot-screen .power, .copilot-screen > .hold { min-height: 72px; font-size: 1.18rem; }
+.copilot-screen progress { width: 100%; accent-color: var(--accent); }
+.tangible-cards h2 { font-size: 1.1rem; margin: 1rem 0 0; }
+.tangible-cards article { padding: .85rem; border-radius: 12px; background: #18232e; }
+.tangible-cards h3, .tangible-cards p, .copilot-screen p { margin: 0 0 .45rem; }
+.tangible-cards article div { display: flex; flex-wrap: wrap; gap: .4rem; }

@@ -4,6 +4,7 @@
  */
 import { TEAM_LABEL, playerTeam, roleLabel, SEAT_IDS } from '../client-shared/seatLabels.js';
 import type { Phase, Seat, SeatId, Team } from '../server/types.js';
+import { CopilotScreen } from './copilot/CopilotScreen.js';
 import { PilotScreen } from './pilot/PilotScreen.js';
 import { actionButton as button } from './ui/press.js';
 import { PhoneSession } from './session.js';
@@ -24,7 +25,8 @@ const WAITING: Record<Phase, string> = {
 let team: Team | null = null;
 let screenKey = '';
 
-let pilot: PilotScreen | null = null;
+let race: PilotScreen | CopilotScreen | null = null;
+let raceSeat: SeatId | null = null;
 
 /** Ajoute un pictogramme et un statut textuel à un choix d'équipe ou de rôle. */
 function choice(label: string, icon: string, detail: string, color: Team, action: () => void, disabled: boolean) {
@@ -91,8 +93,8 @@ function showSeat(seat: SeatId, state: Phase): void {
   const selected = playerTeam(seat);
   document.body.dataset.team = selected;
   title.textContent = `${roleLabel(seat)} · Équipe ${TEAM_LABEL[selected]}`;
-  if (pilot) {
-    if (!screen.contains(pilot.root)) screen.replaceChildren(pilot.root);
+  if (race) {
+    if (!screen.contains(race.root)) screen.replaceChildren(race.root);
     return;
   }
   const info = document.createElement('p');
@@ -113,12 +115,17 @@ function showSeat(seat: SeatId, state: Phase): void {
 function render(): void {
   if (notice.textContent !== session.notice) notice.textContent = session.notice;
   const { state, seat, room, online, pending } = session;
-  if (state && seat?.endsWith('-pilot') && (state.phase === 'RACE' || state.phase === 'PAUSED')) {
-    pilot ??= new PilotScreen(session, playerTeam(seat));
-    pilot.update(state);
-  } else if (pilot) {
-    pilot.close();
-    pilot = null;
+  if (state && seat && (state.phase === 'RACE' || state.phase === 'PAUSED')) {
+    if (raceSeat !== seat || !race) {
+      race?.close();
+      raceSeat = seat;
+      race = seat.endsWith('-pilot') ? new PilotScreen(session, playerTeam(seat)) : new CopilotScreen(session, seat);
+    }
+    race.update(state);
+  } else if (race) {
+    race.close();
+    race = null;
+    raceSeat = null;
   }
   const key = JSON.stringify([room, team, online, session.canPlay, seat, pending, seat ? state?.phase : state?.seats]);
   if (key === screenKey) return;
