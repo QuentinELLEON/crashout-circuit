@@ -75,3 +75,20 @@ button.choice small { margin-inline-start: auto; color: var(--muted); text-align
 .track-position { display: grid; gap: .3rem; }
 .track-position input { width: 100%; accent-color: var(--accent); }
 .accessible-placement .primary { min-height: 56px; }
+
+#notice:empty { display: none; }
+.pilot-viewport canvas.pixelated { object-fit: contain; image-rendering: pixelated; }
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 640px) {
+  main:has(.pilot-screen) { width: 100%; padding-block: max(.4rem, env(safe-area-inset-top)); }
+  main:has(.pilot-screen) .brand { display: none; }
+  main:has(.pilot-screen) h1 { font-size: 1.05rem; margin: .2rem 0 .45rem; }
+  .pilot-screen { grid-template-columns: minmax(0, 1.9fr) minmax(230px, 1fr); gap: .4rem .8rem; }
+  .pilot-viewport { grid-column: 1; grid-row: 1 / span 7; align-content: start; }
+  .pilot-screen > :not(.pilot-viewport) { grid-column: 2; }
+  .pilot-screen > .detail { min-height: 0; font-size: .88rem; }
+  .pilot-viewport canvas { height: clamp(120px, calc(100dvh - 8rem), 390px); }
+  .pilot-direction .hold { min-height: 48px; }
+  .pilot-settings { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: .35rem; }
+  .pilot-screen button { padding: .45rem; }
+  .view-caption { align-self: center; flex: 1 1 auto; }
+}

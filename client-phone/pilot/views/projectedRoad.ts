@@ -5,7 +5,7 @@ import { boostFrame } from '../../../server/track/boostGeometry.js';
 import type { BoostGate } from '../../../server/types.js';
 import { clipDepth, FAR, farthestFirst, NEAR, type Projection } from './projection.js';
 
-export type RoadColors = { road: [string, string]; edge: [string, string]; fog: string; boost: string };
+export type RoadColors = { road: [string, string]; edge: [string, string]; fog: string; boost: string; pixelated?: boolean };
 
 export class ProjectedRoad {
   private track: TrackGeometry | null = null;
@@ -13,7 +13,7 @@ export class ProjectedRoad {
   private readonly segments: { i: number; depth: number }[] = [];
 
   /** Sélectionne puis dessine les portions visibles du circuit. */
-  draw(ctx: CanvasRenderingContext2D, projection: Projection, track: TrackGeometry, colors: RoadColors, reduced: boolean): void {
+  draw(ctx: CanvasRenderingContext2D, projection: Projection, track: TrackGeometry, colors: RoadColors, reduced: boolean, flicker = 0): void {
     if (track !== this.track) {
       this.track = track;
       this.visibility = visibleTrackEdges(track);
@@ -29,15 +29,16 @@ export class ProjectedRoad {
       this.segments.push({ i, depth: (point.depth + next.depth) / 2 });
     }
     this.segments.sort(farthestFirst);
-    const budget = reduced ? 44 : 60;
+    const budget = colors.pixelated ? (reduced ? 36 : 48) : reduced ? 44 : 60;
     for (let s = Math.max(0, this.segments.length - budget); s < this.segments.length; s++) {
       const { i, depth } = this.segments[s];
       const a = track.outerEdge[i], b = track.outerEdge[(i + 1) % n];
       const c = track.innerEdge[(i + 1) % n], d = track.innerEdge[i];
-      const band = Math.floor(i / 4) % 2;
+      const band = Math.floor((i + flicker) / 4) % 2;
       const quad = [a, b, c, d];
       drawGround(ctx, projection, quad, colors.road[band]);
-      const fog = Math.min(.88, Math.max(0, (depth - 240) / (FAR - 240)));
+      const fog = colors.pixelated ? (depth > 565 ? .65 : 0)
+        : Math.min(.88, Math.max(0, (depth - 240) / (FAR - 240)));
       if (this.visibility[0][i]) {
         drawGround(ctx, projection, [a, b, mix(b, c, .06), mix(a, d, .06)], colors.edge[band]);
       }

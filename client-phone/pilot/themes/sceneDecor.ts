@@ -1,4 +1,5 @@
 /** Place des décors déterministes hors chaussée et les dessine dans la perspective du pilote. */
+import { RETRO } from '../../../client-shared/theme/retroPalette.js';
 import type { TrackGeometry, Vec2 } from '../../../server/types.js';
 import { isInsideTrackRibbon, trackTangent } from '../../../server/geometry.js';
 import { LOGICAL_H, LOGICAL_W } from '../../../server/layout.js';
@@ -87,6 +88,10 @@ function paintDecor(ctx: CanvasRenderingContext2D, p: ScreenPoint & { decor: Dec
       for (let i = 0; i < 3; i++) ctx.fillRect(-size * (1 - i * .14), -size * (.34 + i * .26), size * (2 - i * .28), size * .26);
       ctx.strokeRect(-size / 2, -size * 1.05, size, size * .18);
       break;
+    case 'pixel':
+      ctx.globalAlpha = p.depth < 520 ? 1 : 0;
+      drawPixelDecor(ctx, Math.max(6, Math.round(size)), p.decor.variant);
+      break;
     case 'tents':
       ctx.beginPath(); ctx.moveTo(-size, 0); ctx.lineTo(0, -size * 1.25); ctx.lineTo(size, 0); ctx.closePath();
       ctx.fill(); ctx.stroke();
@@ -100,4 +105,25 @@ function paintDecor(ctx: CanvasRenderingContext2D, p: ScreenPoint & { decor: Dec
 /** Produit une valeur reproductible entre zéro et un. */
 function hash(seed: number): number {
   return ((Math.imul(seed ^ (seed >>> 16), 0x45d9f3b) >>> 0) % 65536) / 65536;
+}
+
+/** Dessine les silhouettes pixellisées du bord de piste. */
+function drawPixelDecor(ctx: CanvasRenderingContext2D, size: number, variant: number): void {
+  const half = Math.round(size / 2);
+  ctx.fillStyle = RETRO.shadow;
+  ctx.fillRect(-half + 2, 0, size, 3);
+  if (variant === 0) {
+    ctx.fillStyle = RETRO.dark;
+    ctx.fillRect(-2, -half, 4, half);
+    ctx.fillStyle = RETRO.leaf;
+    ctx.fillRect(-half, -size + 3, size, half);
+    ctx.fillRect(-half + 3, -size, size - 6, half);
+  } else {
+    ctx.fillStyle = variant === 1 ? RETRO.dark : RETRO.rock;
+    ctx.fillRect(-half, -half - 3, size, half + 3);
+    ctx.fillStyle = variant === 1 ? RETRO.yellow : RETRO.cloud;
+    ctx.fillRect(-half + 2, -half - 1, size - 4, 3);
+    ctx.fillStyle = RETRO.red;
+    ctx.fillRect(-half + 2, -4, size - 4, 2);
+  }
 }

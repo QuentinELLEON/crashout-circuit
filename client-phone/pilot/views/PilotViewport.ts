@@ -3,6 +3,7 @@ import type { GameState, Team } from '../../../server/types.js';
 import { actionButton } from '../../ui/press.js';
 import { PeripheralView } from './PeripheralView.js';
 import { PerspectiveView } from './PerspectiveView.js';
+import { RETRO_PHONE_SIZE } from '../themes/retroBackdrop.js';
 import { RaceFrames } from './raceFrames.js';
 
 export class PilotViewport {
@@ -88,8 +89,11 @@ export class PilotViewport {
     if (!this.state || document.hidden) return;
     const perspective = this.view !== 'peripheral';
     if (perspective) this.measure(frameTime);
-    const ratio = Math.min(2, window.devicePixelRatio) * (perspective ? this.slow ? .5 : .75 : 1);
-    const w = Math.round(this.canvas.clientWidth * ratio), h = Math.round(this.canvas.clientHeight * ratio);
+    const pixelated = perspective && this.state.theme === 'retro';
+    this.canvas.classList.toggle('pixelated', pixelated);
+    const ratio = Math.min(2, window.devicePixelRatio || 1) * (perspective ? this.slow ? .5 : .75 : 1);
+    const w = pixelated ? RETRO_PHONE_SIZE.width : Math.round(this.canvas.clientWidth * ratio);
+    const h = pixelated ? RETRO_PHONE_SIZE.height : Math.round(this.canvas.clientHeight * ratio);
     if (!w || !h) return;
     if (this.canvas.width !== w) this.canvas.width = w;
     if (this.canvas.height !== h) this.canvas.height = h;

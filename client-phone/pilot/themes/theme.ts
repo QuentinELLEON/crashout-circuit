@@ -1,10 +1,11 @@
 /** Décline les matériaux de la table dans les vues du pilote. */
+import { RETRO } from '../../../client-shared/theme/retroPalette.js';
 import type { ThemeId } from '../../../server/types.js';
 import { themeLook, THEMES } from '../../../client-shared/theme/looks.js';
 import type { RoadColors } from '../views/projectedRoad.js';
 import type { MapColors } from '../../../client-shared/raceMap/TrackLayer.js';
 
-export type Motif = 'column' | 'pipes' | 'blocks' | 'stands' | 'tents';
+export type Motif = 'column' | 'pipes' | 'blocks' | 'stands' | 'tents' | 'pixel';
 
 export interface PilotTheme {
   id: ThemeId;
@@ -45,7 +46,15 @@ function descriptor(id: ClassicPaletteId): PilotTheme {
   };
 }
 
-const descriptors = new Map<ThemeId, PilotTheme>(THEMES.flatMap(({ id }) => id === 'retro' ? [] : [[id, descriptor(id)] as const]));
+const retro: PilotTheme = {
+  id: 'retro', motif: 'pixel', sky: [RETRO.sky, RETRO.skyLight], ground: [RETRO.grass, RETRO.grassDark],
+  accent: RETRO.yellow, material: RETRO.asphaltLight, lights: RETRO.red,
+  road: { road: [RETRO.asphalt, RETRO.asphaltLight], edge: [RETRO.white, RETRO.red], fog: RETRO.grassDark,
+    boost: RETRO.yellow, pixelated: true },
+  map: { ground: RETRO.grass, road: RETRO.asphalt, roadAlt: RETRO.asphaltLight, edge: RETRO.white, kerb: RETRO.red },
+};
+
+const descriptors = new Map<ThemeId, PilotTheme>(THEMES.map(({ id }) => [id, id === 'retro' ? retro : descriptor(id)]));
 
 /** Retombe sur Ferraille lorsqu'un serveur annonce une ambiance inconnue. */
 export function pilotTheme(id: string | undefined): PilotTheme {

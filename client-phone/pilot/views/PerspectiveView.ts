@@ -9,6 +9,8 @@ import { chaseCamera, chaseCarY } from './chaseCamera.js';
 import { drawChaseCar } from './chaseCar.js';
 
 import { pilotTheme, type PilotTheme } from '../themes/theme.js';
+import { drawRetroBackdrop } from '../themes/retroBackdrop.js';
+import { drawRetroSprite } from '../themes/retroSprites.js';
 import { SceneDecor } from '../themes/sceneDecor.js';
 
 export class PerspectiveView {
@@ -31,16 +33,22 @@ export class PerspectiveView {
     const fov = 70 * (reduced || this.mode === 'third' ? 1 : 1 + Math.min(.1, car.speed / 3000));
     const p = new Projection(camera, w, h, fov);
     const theme = pilotTheme(state.theme);
-    drawSky(ctx, w, h, p.horizon - Math.tan(camera.pitch) * p.focal, theme);
+    const horizon = p.horizon - Math.tan(camera.pitch) * p.focal;
+    const pixelated = theme.id === 'retro';
+    if (pixelated) drawRetroBackdrop(ctx, w, h, horizon, camera.heading, reduced || slow ? 0 : (now / 160) % 22);
+    else drawSky(ctx, w, h, horizon, theme);
     if (state.track) {
-      this.road.draw(ctx, p, state.track, theme.road, slow);
+      this.road.draw(ctx, p, state.track, theme.road, slow,
+        pixelated && !slow && !reduced && car.speed > 30 ? Math.floor(now / 240) % 2 : 0);
       this.decor.draw(ctx, p, state.track, state.trackVersion, state.params.trackDeformMaxShiftPx + 20,
         theme, slow, reduced || slow ? 0 : now);
     }
     this.objects.draw(ctx, p, state, poses, own, now, theme);
     if (this.mode === 'third') {
       const y = p.screen(p.local(pose.pos))?.y ?? h * .88;
-      drawChaseCar(ctx, w, h, chaseCarY(h, y), CAR_COLORS[own], reduced ? 0 : steer,
+      const base = chaseCarY(h, y);
+      if (pixelated) drawRetroSprite(ctx, 'car', w / 2, base, w * .23, h * .25, CAR_COLORS[own], reduced ? 0 : steer);
+      else drawChaseCar(ctx, w, h, base, CAR_COLORS[own], reduced ? 0 : steer,
         !reduced && !slow && car.boostUntil > now, theme);
     } else {
       drawHood(ctx, w, h, CAR_COLORS[own], theme);

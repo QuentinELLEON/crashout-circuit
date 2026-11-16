@@ -2,6 +2,7 @@
 import type { GameState, Team, Vec2 } from '../../../server/types.js';
 import { CAR_COLORS, type CarPose } from '../../../client-shared/raceMap/objects2d.js';
 import { clipLineDepth, FAR, farthestFirst, type Projection, type ScreenPoint } from './projection.js';
+import { drawRetroSprite } from '../themes/retroSprites.js';
 import type { PilotTheme } from '../themes/theme.js';
 import { drawGround, drawProjectedBoost } from './projectedRoad.js';
 
@@ -77,6 +78,10 @@ function drawArc(ctx: CanvasRenderingContext2D, p: Projection, a: Vec2, b: Vec2,
 /** Dessine un objet visible avec une silhouette distincte et une atténuation à distance. */
 function drawSprite(ctx: CanvasRenderingContext2D, s: Sprite, theme: PilotTheme): void {
   const w = s.w * s.scale, h = s.h * s.scale;
+  if (theme.id === 'retro') {
+    if (s.depth < 555) drawRetroSprite(ctx, s.glyph, s.x, s.y, w, h, s.color);
+    return;
+  }
   ctx.save();
   ctx.translate(s.x, s.y);
   ctx.globalAlpha = 1 - .75 * (s.depth / FAR) ** 2;
