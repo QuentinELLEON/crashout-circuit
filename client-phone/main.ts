@@ -97,7 +97,10 @@ function showSeat(seat: SeatId, state: Phase): void {
   }
   const info = document.createElement('p');
   info.className = 'detail';
-  info.textContent = WAITING[state];
+  const winner = session.state?.winner;
+  info.textContent = state === 'RESULT' && winner
+    ? winner === 'draw' ? 'Égalité' : `Victoire de l’équipe ${TEAM_LABEL[winner]}`
+    : WAITING[state];
   screen.replaceChildren(info);
   if (['LOBBY', 'MAP', 'READY'].includes(state)) {
     const change = button('Changer de place', () => session.leave());

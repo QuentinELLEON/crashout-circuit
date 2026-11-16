@@ -24,6 +24,7 @@ export class PhoneSession {
   private confirmed = false;
   readonly sync = new StateSync();
   state: GameState | null = null;
+  stateTime = 0;
   seat: SeatId | null = null;
   room = '';
   online = false;
@@ -130,6 +131,7 @@ export class PhoneSession {
     switch (msg.type) {
       case 'State':
         this.state = this.sync.apply(msg.state, msg.t);
+        this.stateTime = msg.t;
         if (this.pending === 'leave' && !['LOBBY', 'MAP', 'READY'].includes(msg.state.phase)) {
           this.pending = null;
         }

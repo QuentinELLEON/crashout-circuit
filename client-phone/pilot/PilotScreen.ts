@@ -7,6 +7,7 @@ import { createControls } from '../../client-shared/controls.js';
 import { holdButton, actionButton } from '../ui/press.js';
 import type { PhoneSession } from '../session.js';
 import { shouldSendInput, type SentInput } from './gyro.js';
+import { PilotViewport } from './views/PilotViewport.js';
 import { WheelSensor, type WheelStatus } from './wheelSensor.js';
 
 const instructions: Record<WheelStatus, string> = {
@@ -21,6 +22,7 @@ const instructions: Record<WheelStatus, string> = {
 
 export class PilotScreen {
   readonly root = document.createElement('section');
+  private readonly viewport: PilotViewport;
   private readonly wheel = new WheelSensor();
   private readonly status = document.createElement('p');
   private readonly input;
@@ -43,6 +45,7 @@ export class PilotScreen {
   private last: SentInput = { time: -Infinity, steer: 0, throttle: 0 };
 
   constructor(private readonly session: PhoneSession, private readonly team: Team) {
+    this.viewport = new PilotViewport(team, () => session.sync.now());
     this.root.className = 'pilot-screen';
     this.input = createControls(msg => session.send(msg));
     this.sensor = actionButton('Activer le volant', () => { void this.activate(); });
@@ -59,7 +62,7 @@ export class PilotScreen {
     settings.append(this.sensor, this.calibrate, this.auto);
     this.direction.className = 'pilot-direction';
     this.direction.append(this.left.button, this.right.button);
-    this.root.append(this.status, this.direction, this.pedal.button, this.repair.button, settings);
+    this.root.append(this.viewport.root, this.status, this.direction, this.pedal.button, this.repair.button, settings);
     document.addEventListener('visibilitychange', this.onVisibility);
     window.addEventListener('pagehide', this.release);
     this.timer = window.setInterval(() => this.step(performance.now()), 1000 / 60);
@@ -69,6 +72,7 @@ export class PilotScreen {
   /** Met les commandes à jour avec le poste, la phase de course et le mode de conduite. */
   update(state: GameState): void {
     this.state = state;
+    this.viewport.update(state, this.session.stateTime);
     const active = this.session.canPlay && state.phase === 'RACE' && !document.hidden;
     if (this.active && !active) this.release();
     this.active = active;
@@ -81,6 +85,7 @@ export class PilotScreen {
     this.closed = true;
     clearInterval(this.timer);
     this.wheel.close();
+    this.viewport.close();
     void this.wakeLock?.release().catch(() => {});
     document.removeEventListener('visibilitychange', this.onVisibility);
     window.removeEventListener('pagehide', this.release);
