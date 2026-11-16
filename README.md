@@ -19,6 +19,17 @@ npm start
 
 Le serveur doit rester ouvert pendant la séance. Les deux appareils doivent pouvoir communiquer sur le réseau local (un Wi-Fi invité qui isole les appareils ne convient pas). Ce prototype est prévu pour le réseau local de la séance ; il n’implémente pas de compte utilisateur.
 
+### Jouer en mode mixte ou à quatre téléphones
+
+La table affiche un QR unique. Démarrer **COURSE** après la connexion des quatre places pour agrandir la surface de tracé. En mode mixte, la table conserve les postes des joueurs qui l’utilisent. Le circuit, les gestes à plusieurs doigts et la pose physique des objets sont partagés sur la table.
+
+| Rôle sur téléphone | Commandes |
+|---|---|
+| Pilote | Volant par inclinaison ou flèches, avance auto ou pédale, réparation à deux. Bouton **Vue** pour passer du plan aux vues à la première ou troisième personne. |
+| Copilote | **Armer le bonus**, **Réparer**, annoncer et gérer les objets posés sur la table. Le **Mode accessibilité** permet de choisir une pose par la carte ou le curseur puis de la confirmer depuis le téléphone. |
+
+Les six ambiances de la table se synchronisent avec les vues du pilote. [Guide des téléphones et fiche de recette](docs/telephones.md)
+
 ### HTTPS pour les téléphones
 
 En HTTP sur le Wi-Fi, Safari iOS ne donne pas accès aux capteurs d’orientation. Le serveur affiche « capteurs iOS indisponibles » si aucune adresse HTTPS n’est configurée. [Documentation du navigateur](https://developer.mozilla.org/fr/docs/Web/API/DeviceOrientationEvent/requestPermission_static)
@@ -48,9 +59,9 @@ npm run build
 npm start
 ```
 
-Recharger ensuite la table sur `http://localhost:3000/`. `npm start` et `npm run dev:server` exécutent `dist/server/` : récupérer les sources sans reconstruire peut laisser fonctionner un ancien tutoriel. Ne pas définir `CRASHOUT_DEV_TOOLS` pendant la séance.
+Recharger ensuite la table à l’adresse locale annoncée au démarrage. `npm start` et `npm run dev:server` exécutent `dist/server/` : récupérer les sources sans reconstruire peut laisser fonctionner un ancien tutoriel. Ne pas définir `CRASHOUT_DEV_TOOLS` pendant la séance.
 
-Au lancement de **TUTORIEL**, les voitures attendent l’appui sur les quatre clés de réparation. Les contacts peuvent être successifs ; le quatrième poste identifié déclenche les trois secondes de feux communs. La réparation apprise plus tard demande, elle, de maintenir les deux clés de l’équipe ensemble.
+Au lancement de **TUTORIEL**, les voitures attendent l’appui sur les quatre commandes de réparation, sur la table ou sur les téléphones. Les contacts peuvent être successifs ; le quatrième poste identifié déclenche les trois secondes de feux communs. La réparation apprise plus tard demande, elle, de maintenir les deux clés de l’équipe ensemble.
 
 ### Développement
 
@@ -59,11 +70,11 @@ npm run build:server
 npm run dev
 ```
 
-Ouvrir `http://localhost:5173/client-table/` , `http://localhost:5173/client-oz/` et `http://localhost:5173/client-phone/`. Vite relaie les échanges et les API vers le serveur du port 3000. Après une modification du serveur, relancer `npm run build:server`.
+Ouvrir `http://localhost:5173/client-table/`, `http://localhost:5173/client-oz/` et `http://localhost:5173/client-phone/`. Vite relaie les échanges et les API vers le serveur du port 3000. Après une modification du serveur, relancer `npm run build:server`.
 
 ## Déroulement
 
-Les partenaires d’une équipe sont en diagonale : pilote cyan en bas à gauche et copilote cyan en haut à droite ; pilote rose en haut à gauche et copilote rose en bas à droite. Chaque poste fait face à son bord de table. Les dépôts tangibles et l’attribution des gestes suivent la position du copilote.
+Lorsque les deux partenaires jouent sur la table, ils sont en diagonale : pilote cyan en bas à gauche et copilote cyan en haut à droite ; pilote rose en haut à gauche et copilote rose en bas à droite. Chaque poste fait face à son bord de table. Les dépôts tangibles et l’attribution des gestes suivent la position du copilote.
 
 1. Choisir **TUTORIEL** pour découvrir le jeu à quatre, ou **COURSE** pour créer directement un circuit. Le thème de séance est **Ferraille**. Le choix des ambiances et de la conduite reste réservé aux outils de développement.
 2. Cyan place P1, Rose place P2 ; Cyan relie les deux points, puis Rose les relie dans sa moitié ; chacun peut commencer par P1 ou P2. La création est guidée et séquentielle. Le circuit suit les tracés, y compris les boucles et croisements ; les refus sont expliqués à l’écran.
@@ -99,7 +110,7 @@ Lorsqu’une réparation est nécessaire (voiture détruite ou moins de 60 HP), 
 
 ## Tutoriel guidé
 
-Le bouton **TUTORIEL** lance le parcours à quatre sur le circuit prédéfini, sans victoire ni perte de vie. Les quatre joueurs identifient leur poste en touchant leur clé de réparation avant les feux de départ. Chaque poste reçoit une consigne courte orientée vers son joueur, une démonstration animée et un rappel de sa couleur ; les coéquipiers sont en diagonale.
+Le bouton **TUTORIEL** lance le parcours à quatre sur le circuit prédéfini, sans victoire ni perte de vie. Les quatre joueurs identifient leur poste en touchant leur clé de réparation avant les feux de départ. Sur la table, chaque poste affiche une consigne orientée et une démonstration animée. Sur téléphone, les instructions suivent le rôle choisi.
 
 Les équipes essaient ensuite la direction, les objets ramassés, POWER, le lance-pierre, le boost, la déformation à deux doigts et la réparation à deux. La partie tangible utilise les vrais objets : pose du mur, contact de la voiture, pose des deux piliers et essai de leur effet électrique. Les deux équipes terminent en rangeant les trois objets dans la réserve. **CRÉER LE CIRCUIT** ouvre directement la création d’une course normale, avec les paramètres choisis auparavant.
 
@@ -131,7 +142,7 @@ La prise de piste accepte une marge intérieure/extérieure de **50 px logiques*
 
 Les boutons nommés **FANTÔME** et **DÉTRUIRE** ont été retirés de la zone copilote. Le copilote possède un seul bouton d’action, **POWER**, et le pad de réparation.
 
-1. La voiture ramasse un objet lorsque son stock est vide. Son icône apparaît comme information dans le poste copilote.
+1. La voiture ramasse un objet lorsque son stock est vide. Son icône apparaît au poste copilote, sur la table ou sur son téléphone.
 2. **Seul POWER du copilote de l’équipe propriétaire peut armer ce stock.** POWER adverse ne l’arme pas. L’objet reste armé jusqu’au geste valide.
 3. Sans limite de temps après l’armement, le geste correspondant est disponible sur la surface partagée : **3 doigts rapprochés, tirer l’un d’eux puis relâcher** pour le lance-pierre à élastique, **2 contacts simultanés ou décalés, espacés de 0 à 400 px** pour le portail de boost (largeur minimale de piste active : 110 px).
 4. L’armement est **neutre et volable** : le premier geste valide consomme l’objet armé du propriétaire, et l’effet appartient à l’équipe qui a exécuté le geste. Le lance-pierre touche toute voiture dans sa zone d’impact, tireur compris ; un portail volé aide l’équipe qui l’a créé.
@@ -212,7 +223,7 @@ La branche `baptiste` est maintenant intégrée : dessin possible dans les deux 
 
 Le jeu reçoit des **actions de jeu**, indépendantes des périphériques. `client-shared/controls.ts` est l’interface commune aux adaptateurs clavier et tactile : direction, POWER et gestes. Les types de messages sont dans `server/types.ts` ; les objets fixes et la validation partagée sont dans `server/tangibles/tangibles.ts` ; les règles et la consommation des stocks restent validées dans `server/rules/GameRules.ts` (logique dans `server/rules/`).
 
-Un futur adaptateur mobile pourra convertir un gyroscope en direction normalisée `[-1, 1]` et utiliser la même interface, sans modifier la physique. Aucun contrôle mobile, appairage ni accès aux capteurs n’est implémenté à ce stade. Un futur lecteur de tangibles pourra envoyer les mêmes actions de présence, déplacement et retrait qu’Oz, après ajout de son rôle de connexion.
+Le volant sur téléphone transmet une direction normalisée dans `[-1, 1]` via la même interface. Le serveur associe les commandes à la place choisie dans le lobby.
 
 | Équipe | Direction clavier | Accélération en mode pédale | POWER du copilote | Réparation des deux postes |
 |---|---|---|---|---|
@@ -289,7 +300,7 @@ Les anciennes règles expérimentales fantôme / destruction restent dans le mot
 
 L’[audit des branches et des issues du 1er novembre 2026](docs/audit-pretests-2026-11-01.md) couvre toutes les branches locales et distantes, les issues et les critères qui nécessitent encore la vraie table. Les ramassables sont répartis aléatoirement à chaque création humaine de circuit, espacés entre eux et de la ligne de départ ; leur réapparition conserve leur position pendant la course. Le tutoriel garde ses positions prévisibles.
 
-Le menu de séance conserve Plein écran, les réglages de course, le son et Accueil. Les volumes détaillés se déplient à la demande ; la durée du chronomètre apparaît seulement s’il est activé. Pendant le tutoriel, les réglages de course sont masqués. Les repères des quatre postes apparaissent pendant la création, pas sur l’accueil.
+Le menu de séance conserve Plein écran, les réglages de course, le son et Accueil. Les volumes détaillés se déplient à la demande ; la durée du chronomètre apparaît seulement s’il est activé. Pendant le tutoriel, les réglages de course sont masqués. Les repères des postes encore utilisés sur table apparaissent pendant la création. L’accueil affiche les quatre places au-dessous du QR.
 
 ## Repères des fichiers de configuration
 

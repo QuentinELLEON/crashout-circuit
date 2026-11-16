@@ -5,13 +5,13 @@ Soutenance finale: **à confirmer** (le contexte d'origine indique le 28 sept 20
 
 Fiabilité: **[OK]** vérifié source constructeur/littérature · **[EST]** estimation, valeur par défaut à régler en test · **[?]** non vérifié · **[DÉCISION]** choix arbitré entre sources contradictoires, à valider par l'équipe.
 
-Cette fiche conserve les décisions de conception et leurs identifiants (R-xx, C-xx, E-xx, P-xx). Pour le prototype exécuté, le [README](README.md), les tests et les sources décrivent les commandes effectivement disponibles. Les variantes historiques (mobile, fantôme, destruction, secours Oz) ne sont pas des contrôles de l’interface actuelle.
+Cette fiche conserve les décisions de conception et leurs identifiants (R-xx, C-xx, E-xx, P-xx). Pour le prototype exécuté, le [README](README.md), les tests et les sources décrivent les commandes effectivement disponibles. Les sections historiques conservent les variantes de conception. Les commandes sur téléphone sont décrites dans l’état consolidé et le [guide des téléphones](docs/telephones.md).
 
 ---
 
 ## État consolidé au 16 novembre 2026 (à lire en premier)
 
-Cette section résume tout ce qui a été décidé, construit et dit en conversation jusqu'à `main` @ `91d1312` (2 novembre 2026, 74 commits) et la section L (qualité du code, 16 novembre). Elle réconcilie les sections historiques plus bas. En cas de doute sur une commande ou une règle : **code > README > cette fiche > sections historiques**.
+Cette section décrit la version de développement de l’EPIC #62, fondée sur `main` @ `f22387e` après la réorganisation #66. En cas de doute sur une commande ou une règle : **code > README > cette fiche > sections historiques**.
 
 ### A. Équipe, dépôt et façon de travailler
 
@@ -37,22 +37,24 @@ Cette section résume tout ce qui a été décidé, construit et dit en conversa
 | 30 oct. | Audio et ambiance Ferraille (CC0 Kenney) |
 | 1–2 nov. | Audit pré-tests, tutoriel à quatre, accès Oz sans code, menu de séance durci ; **premiers essais utilisateurs prévus le lundi 2 novembre** |
 | 2 nov. | Documents d'évaluation (feuilles de notation, questionnaire), guide du code, QCM d'entretien |
-| après le 2 nov. | **Aucun commit.** Résultats des essais non consignés dans le dépôt (tableau de `docs/sessions-de-test.md` §5 toujours « à remplir ») |
+| 16 nov. | Réorganisation #66, puis places et lobby QR, HTTPS, commandes et vues téléphone, partie mixte, thème Rétro et pose accessible (#62) |
 
 ### C. Ce qui est vrai aujourd'hui (écarts avec les sections historiques)
 
 | Sujet | Historique (plus bas) | **Actuel** |
 |---|---|---|
-| Pilote | Smartphone / QR code, bouton UseItem | **Sur la table** : bande gauche/droite, vie, réparation ; AUTO (défaut) ou PÉDALE réglé par équipe dans Paramètres. Aucun contrôle mobile implémenté (T-02 sans objet) |
-| Objets ramassés | Armés par le pilote, 5 s | **POWER du copilote propriétaire**, aucune expiration (`armWindowS` = 0), un seul stock armé sur la table, geste neutre et volable |
+| Pilote | Station fixe, bouton UseItem prévu | Table ou téléphone. Sur téléphone, volant par inclinaison ou commandes tactiles, AUTO/PÉDALE, réparation, plan 2D et vues à la première ou troisième personne |
+| Copilote | Poste tactile et tangibles | POWER, réparation et gestion des objets sur téléphone. Pose sur la table par défaut, avec pose à distance si le mode accessibilité du poste est actif |
+| Places | Rôles fixes de la table | Entrée par QR et choix équipe/rôle. Reconnexion réservée. La table conserve les postes des joueurs locaux dans une partie mixte |
+| Objets ramassés | Armés par le pilote, 5 s | **POWER du copilote propriétaire**, aucune expiration (`armWindowS` = 0), un seul stock armé à la fois, geste neutre et volable |
 | Fantôme / Destruction (C-03, C-04) | Boutons copilote | **Retirés de l'interface** ; règles conservées dans le moteur à titre de référence |
 | Tangibles (§8.2, C-05) | 4 poteaux, 2 par équipe, IDs 1–4 | **3 objets neutres LEGO** : 1 mur 10×4, 2 piliers 4×4 ; sans recharge ; dépôt neutre à droite entre les copilotes ; arc jusqu'à 350 px ; échelle via `tableDiagonalInches` (55) |
 | Console Oz | Secours (obstacle, boost, panne), journal | **Placement/rotation/activation/retrait des tangibles uniquement**, pose tactile à deux doigts, accès direct `/oz` **sans code**, mobile/portrait, journal `/api/oz-log`. Le magicien ne lance pas la partie, n'arme aucun bonus |
 | Pierre | −100 puis −50 | **−50 PV + étourdissement 1,5 s** (équilibrage #39 : 2 pierres = voiture hors d'usage) ; touche toute voiture dans la zone, tireur compris |
 | Fin de course | 3 tours ou 300 s | 3 tours par défaut (réglable 1–99), chrono **désactivé** (`sessionMaxSeconds` = 0) |
 | Réparation | 2 s à deux pads | + **3 feux rouges (3 s)** au point de reprise avant le vert ; pause/physique/dégâts respectent ce délai |
-| Création de circuit | Ancres P1 puis P2, cyan puis rose | + dessin dans les deux sens, **révélation 1,8 s puis roulette du damier** (décélération 3,4 s, fixation 0,45 s), départ tiré parmi les portions peu courbées ; **4 ramassables à positions aléatoires** à chaque circuit humain |
-| Thèmes | Néon seul | 5 thèmes (Néon, Ferraille, Toy Circuit, F1 Classic, Mayhem) ; **la séance impose Ferraille** et cache le choix |
+| Création de circuit | Ancres P1 puis P2, cyan puis rose | + dessin dans les deux sens, **révélation 1,8 s puis roulette du damier** (décélération 3,4 s, fixation 0,45 s), départ tiré parmi les portions peu courbées ; zone agrandie quand les quatre téléphones sont connectés au début du tracé ; **4 ramassables à positions aléatoires** à chaque circuit humain |
+| Thèmes | Néon seul | Néon, Ferraille, Circuit miniature, Grand Prix, Castagne, Rétro. Ferraille au démarrage, synchronisation des vues téléphone lors d’un changement sur la table |
 | Paramètres | — | Engrenage à gauche entre les pilotes : plein écran, Facile/Moyen/Difficile (50/75/100 %), tours, chrono, audio, Accueil. Les outils PC exigent `CRASHOUT_DEV_TOOLS=1` côté serveur |
 | Modes | TABLE/PC | TABLE, PC (dev), **TUTORIEL** (à quatre, circuit prédéfini, sans dégâts), **TEST TANGIBLES** (pilotes automatiques, dev) ; tous passent par `startRace()` |
 | Table | iiyama 65" 4K | Les LEGO sont calibrés pour une **dalle 55"** (`tableDiagonalInches`) ; `docs/seuils-tactiles.md` raisonne en 65" (0,75 mm/px). **À aligner avec la dalle réellement utilisée** |
@@ -66,7 +68,7 @@ Vraie course sur circuit prédéfini avec garde-fous ; chaque équipe a sa progr
 ### E. Vérification et intégration continue
 
 - `npm run check` (types client + serveur, taille des fichiers, acceptation, gestes, réseau, audio, création de circuit, session publique, pickups, build) ; même commande en CI GitHub (`.github/workflows/check.yml`, Node 20, `npm ci`). `npm run verify` ajoute visuels, tangibles, autopilote, boost, pose tactile, réglages de course, réservations.
-- Relevé du 16 nov. : 100 scénarios d'acceptation, 42 contrôles de rendu, 37 tests de gestes (audit du 1er nov. : 41 et 17). Aucune mesure sur la vraie dalle (latence, 10 contacts, rejet de paume, 4K/60 fps, palm) : voir `measures.md` §2, toujours « à remplir ».
+- Relevé du 16 nov. : 100 scénarios d'acceptation, 43 contrôles de rendu, 37 tests de gestes et tests du parcours smartphone (audit du 1er nov. : 41 et 17). Aucune mesure sur la vraie dalle (latence, 10 contacts, rejet de paume, 4K/60 fps, palm) : voir `measures.md` §2, toujours « à remplir ».
 - Simulation d'équilibrage : `npm run sim:sling`.
 - Journal tactile (dev) : F4 / `?log=1` → CSV ; seuils réglables par URL (`?cluster=`, `?palm=`…).
 

@@ -76,7 +76,7 @@ Le dossier est rangé par responsabilité : quelques fichiers à la racine, le r
 | `track/` | `MapGenerator.ts` : façade qui transforme les deux tracés à main levée en circuit fermé valide (`TrackGeometry`) ; les étapes (nettoyage, fusion, géométrie, placement, validation, stratégies, secours) sont dans `generation/`. Aussi `mapCreation.ts` (règles des ancres P1/P2, partagées avec le client), `trackPresentation.ts` (horloge commune de la révélation et de la roulette du départ) et `boostGeometry.ts` (portail de boost, y compris aux carrefours). |
 | `tangibles/` | Les trois tangibles fixes (un mur et deux piliers, `tangibles.ts`), la géométrie de collision du mur (`tangibleGeometry.ts`) et les contrôles de la pose tactile à deux contacts (`tangibleTouch.ts`). |
 | `modes/` | `Tutorial.ts` : tutoriel guidé, avec une progression indépendante par équipe, validée par de vrais événements de jeu. `AutomaticPilot.ts` : suiveur de ligne centrale du mode « TEST TANGIBLES ». |
-| `protocol/` | Les deux fichiers réexportés par `types.ts`. |
+| `protocol/` | État de jeu, messages communs, réservation et pose mobile, identifiants de thème. Les types publics sont réexportés par `types.ts`. |
 
 ### `client-table/` (la table, en Canvas 2D)
 
@@ -87,11 +87,12 @@ La racine ne garde que `main.ts`, `view.ts` et `index.html` ; tout le reste est 
   - `view.ts` : état local du client (effets, lance-pierre en cours de tir).
 - **`gesture/`** : le cerveau multitouch. `GestureRecognizer.ts` est la façade ; elle suit jusqu'à 10 contacts et délègue. `contactDown` et `contactRelease` aiguillent les contacts ; `actions/` contient chaque geste : lance-pierre (3 doigts, `slingGesture`), portail de boost (`bonusEvaluation`), déformation de la piste (`borderPullGesture`), dessin de la carte (`mapDrawing`), pose des tangibles (`placementTouch`), pilotage et réparation (`pilotControls`), simulation à la souris (`mouseSimulation`). `gestureTuning.ts` (seuils réglables par l'URL en développement) et `GestureLog.ts` (journal des décisions, F4, CSV).
 - **`renderer/`** : `Renderer.ts`, moteur de rendu principal (façade : couches par thème et composition des écrans), et les écrans et surcouches (`screenOverlays`, `raceOverlays`, `mapCreationScreen`).
-- **`ui/`** : `HUD.ts` (les quatre panneaux d'angle, chacun tourné vers son bord de table ; les pilotes ont la direction, les PV et la réparation, les copilotes POWER et la réparation), `TutorialOverlay.ts` et `TutorialGestures.ts` (bandeaux et démonstrations du tutoriel), `TrackCreation.ts` (création du circuit), `TangibleTransitions.ts` (apparition, déplacement et retrait), `TangibleTouchPreview.ts` (aperçu de la pose à deux contacts) et `icons.ts` (pictogrammes partagés).
+- **`ui/`** : `HUD.ts` (les panneaux encore utilisés localement, chacun tourné vers son bord de table ; les pilotes ont la direction, les PV et la réparation, les copilotes POWER et la réparation), `TutorialOverlay.ts` et `TutorialGestures.ts` (bandeaux et démonstrations du tutoriel), `TrackCreation.ts` (création du circuit), `TangibleTransitions.ts` (apparition, déplacement et retrait), `TangibleTouchPreview.ts` (aperçu de la pose à deux contacts) et `icons.ts` (pictogrammes partagés).
 - **`sound/`** : `Sound.ts`, `AudioPlan.ts`, `AudioAssets.ts` : sons de la table (signaux synthétisés, extraits CC0 déclarés dans `audio/sources.json`), plan d'ambiance et de musique par thème. `audio/` contient les fichiers sonores et leurs licences.
-- **`themes/`** : `themes.ts` (liste des thèmes et préférence locale : Néon, Ferraille, Toy Circuit, F1 Classic, Mayhem), `ThemeWorld.ts` (composition du décor), `SceneryLayout.ts` (placement des éléments sans chevauchement), `RaceGrid.ts` (cases de départ) et `VisualMotion.ts` (historique de mouvement). Un sous-dossier par famille de décor :
+- **`themes/`** : `themes.ts` (préférences et réexport de la liste commune des six ambiances), `ThemeWorld.ts` (composition du décor), `SceneryLayout.ts` (placement des éléments sans chevauchement), `RaceGrid.ts` (cases de départ) et `VisualMotion.ts` (historique de mouvement). Un sous-dossier par famille de décor :
   - `neon/` : `NeonTrack`, `NeonVehicles`, `NeonObjects`, `NeonEffects`, `VoidBackdrop` et `neon.ts` (textures et bruit partagés).
   - `scrap/` (Ferraille) : `ScrapTrack`, `ScrapBackdrop`, `ScrapMaterials`, `IndustrialMachinery`, `IndustrialMotion`, `IndustrialVapour`.
+  - `retro/` : décor pixelisé, rendu du monde à 480 × 270 et karts à seize orientations.
   - `circuit/` (Toy, F1, Mayhem) : `CircuitTrack` et `CircuitMaterials` (la piste commune), `ToyWorkshop`, `F1Venue` avec `StandSections` (tribunes), `MayhemFestival`.
 - **`app/`** : les modules d'initialisation appelés par `main.ts`.
 - `index.html` : la page de la table.
@@ -104,16 +105,24 @@ La racine ne garde que `main.ts`, `view.ts` et `index.html` ; tout le reste est 
 - `OzLog.ts` : journal horodaté des événements, qui peut être rejoué.
 - `ozView.ts` est un très petit fichier. `index.html` est la page de la console.
 
-### `client-shared/` (utilisé par les deux clients)
+### `client-phone/` (interface joueur)
+
+- `main.ts` affiche le code, le choix d’équipe et de rôle, puis l’écran associé. `session.ts` gère `/ws/player`, la réservation par jeton et la reconnexion.
+- `pilot/` convertit le capteur ou les appuis en commandes. `views/` contient le plan, les projections en perspective et l’interpolation. `themes/` reprend les ambiances de la table.
+- `copilot/` regroupe l’armement, les objets, la réparation et la carte de pose accessible. Le serveur valide les poses à partir de `server/rules/gameplay/remotePlacementGeometry.ts`.
+
+### `client-shared/` (interfaces de table, joueur et console)
 
 - `net.ts` : connexion WebSocket, plus `StateSync`, qui reconstitue l'état complet parce que le serveur n'envoie les données lourdes de `track` que lorsqu'elles changent.
-- `controls.ts` : interface d'« intentions de jeu » indépendante du périphérique (direction, POWER, geste). Un futur adaptateur mobile pourrait s'y brancher.
+- `controls.ts` : interface d'« intentions de jeu » indépendante du périphérique (direction, POWER, geste). Le pilote mobile et la table utilisent les mêmes commandes de conduite.
+- `raceMap/` : carte 2D et cache de piste partagés par le pilote et la pose accessible. `theme/` contient les palettes communes.
 - `tangibleGeometry.ts` et `trackVisibility.ts` : géométrie partagée avec le serveur, et règle de visibilité de la piste.
 
 ### `scripts/` (tests, lancés avec `tsx`)
 
 - `acceptance.ts` : lance la grande suite de tests des règles serveur avec une horloge simulée, sans réseau. Les scénarios sont rangés par domaine dans `acceptance/` (`harness.ts` pour le banc commun, `scenarioActions.ts` pour les gestes de test partagés, puis `track/`, `race/`, `tutorial/` et `tangibles/`).
-- `network/` : `network-acceptance.ts`, tests WebSocket réels.
+- `network/` : tests WebSocket réels, HTTPS, session mobile et partie à quatre téléphones.
+- `phone/` : tests du volant, des vues, de la pose accessible et des thèmes.
 - `gestures/` : `gestures.ts`, `gesture-reservations.ts`, `boost.ts`, `tangible-touch.ts` (gestes et pose tactile).
 - `game/` : `race-settings.ts`, `pickups.ts`, `track-creation.ts`, `public-session.ts`, `autopilot.ts` (règles par sujet) et `sling-balance.ts` (simulation d'équilibrage du lance-pierre, `npm run sim:sling`).
 - `rendering/` : `visuals.ts` (rendu et disposition), `test-tangible-anims.ts` (animations des tangibles) et `audio.ts`.
@@ -122,7 +131,7 @@ La racine ne garde que `main.ts`, `view.ts` et `index.html` ; tout le reste est 
 
 ### Fichiers racine, documentation et prototype
 
-- **Configuration :** `config.json` (toutes les valeurs réglables), `vite.config.ts` (deux pages, `/ws` et `/api` relayés vers le port 3000), `tsconfig.json` (clients et scripts), `tsconfig.server.json` (serveur), `package.json`.
+- **Configuration :** `config.json` (toutes les valeurs réglables), `vite.config.ts` (trois pages, `/ws` et `/api` relayés vers le port 3000), `tsconfig.json` (clients et scripts), `tsconfig.server.json` (serveur), `package.json`.
 - **`index.html` :** redirige vers `/client-table/`.
 - **Documentation :** `README.md` est la meilleure description côté utilisateur. `context.md` est le registre de conception (identifiants R-xx, C-xx, etc.). `measures.md` sépare ce qui est testé automatiquement de ce qui doit encore être mesuré sur la vraie table. `docs/` couvre la direction artistique, les thèmes, le rendu néon, la lisibilité, la pose tactile et l'intégration de l'équipe. 
 - **`.kiro/specs/` :** exigences, conception et liste de tâches d'origine.

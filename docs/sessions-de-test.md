@@ -33,12 +33,23 @@ Il n'y a pas de présentation : l'application est testée par des personnes qui 
    Le terminal affiche les adresses et « Outils de test : désactivés ». Si les outils sont activés, supprimer la variable `CRASHOUT_DEV_TOOLS` et redémarrer avant la séance. Laisser le terminal ouvert.
 3. Ouvrir `http://localhost:3000/` dans Chrome ou Edge, puis **Paramètres → Plein écran**. **Ferraille** est l’ambiance initiale. Les diagnostics, simulations et modes de test sont inaccessibles dans ce lancement normal, y compris par leurs anciens raccourcis et paramètres d’URL.
 4. Sur l'autre ordinateur (même réseau Wi-Fi, pas un réseau invité qui isole les appareils), ouvrir `http://<adresse-de-la-table>:3000/oz`. L’adresse exacte est écrite au démarrage du serveur. La console s’ouvre directement, sans code. Un téléphone ou une tablette convient aussi ; le bouton ↻ oriente la carte.
-5. Dans la console, garder **Pose avec les doigts**. Sur la table, choisir **TUTORIEL** (un clic à la souris lance aussi le parcours tactile). Chaque personne touche la clé de son poste : le départ attend les quatre personnes. Les coéquipiers de même couleur sont en diagonale.
+5. Dans la console, garder **Pose avec les doigts**. Sur la table, choisir **TUTORIEL** (un clic à la souris lance aussi le parcours tactile). Chaque personne touche la clé de réparation de son poste, sur téléphone ou sur table. Le départ attend les quatre personnes. Les coéquipiers de même couleur sont en diagonale.
 6. À la fin du tutoriel, ranger les trois tangibles dans la réserve à droite, entre les copilotes. Choisir **CRÉER LE CIRCUIT**, tracer le circuit à deux équipes, puis toucher le bouton de départ. Les tours, dégâts, réparations et paramètres de course redeviennent ceux d’une partie normale.
 
 ### Connexion HTTPS pour les capteurs des téléphones
 
 Pour un essai au gyroscope, suivre la [configuration HTTPS](../README.md#https-pour-les-téléphones) et ouvrir l’adresse HTTPS annoncée au démarrage sur chaque téléphone. Une alerte de certificat indique que l’autorité locale doit encore être approuvée sur l’appareil.
+
+### Recette smartphone
+
+Vérifier d’abord que les quatre rôles sont affichés au-dessous du QR. Pour le grand circuit, lancer **COURSE** après leur connexion. Suivre la [recette](telephones.md#recette-sur-appareils) et consigner les résultats pour chaque téléphone.
+
+| Appareil et navigateur | QR et reprise | Volant et orientation | Trois vues et thèmes | Pose accessible avec lecteur d’écran |
+|---|---|---|---|---|
+| iPhone · Safari | À tester | À tester | À tester | VoiceOver à tester |
+| Android · Chrome | À tester | À tester | À tester | TalkBack à tester |
+
+Vérifié en développement dans Chrome le 16 novembre 2026 avec quatre fenêtres émulant des téléphones. QR décodé à partir du rendu de la table, attribution des places, rechargement et reprise, dessin du grand circuit, trois vues, commandes tactiles, thème Rétro synchronisé et pose à distance avec le curseur. Les mesures de latence et de fluidité, le gyroscope, les lecteurs d’écran et les contacts simultanés restent à vérifier sur les appareils de la séance.
 
 ### Consignes réservées à l’opérateur
 
