@@ -145,7 +145,7 @@ ol.crit { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
 
   <section aria-labelledby="news">
     <h2 id="news">Issues à créer</h2>
-    <p class="lede">Pas encore ouvertes sur GitHub. Les lignes du spectateur sont reprises dans le découpage de l'epic #53.</p>
+    <p class="lede">Pas encore ouvertes sur GitHub. Les lignes du spectateur sont déjà des issues (#56 à #62) liées à l'epic #53.</p>
     <ul class="plain" id="newList"></ul>
   </section>
 
@@ -172,7 +172,7 @@ var ROWS = [
   { g: "tra", t: "Planifier le travail", s: "Ce Gantt, découpé par boucle", a: 1, b: 1, st: "done" },
   { g: "tra", t: "Définir le MVP", s: "Les MVP 1 à 3 sont esquissés dans docs/ihm-reparties ; à figer avec l'équipe", a: 1, b: 1, st: "todo" },
   { g: "tra", t: "Appliquer la méthode de conception", s: "Modèles de tâches des quatre boucles (HAMSTERS, draw.io)", a: 1, b: 2, st: "todo", create: true },
-  { g: "tra", t: "Lister les événements client ↔ serveur", s: "Base : server/protocol/messages.ts ; ajouter le flux SSE du spectateur", a: 1, b: 2, st: "todo", create: true },
+  { g: "tra", t: "Lister les événements client ↔ serveur", s: "#56 · Base : server/protocol/messages.ts ; ajouter le flux SSE du spectateur", a: 1, b: 2, st: "todo" },
   { g: "tra", t: "Trancher : télécommandes Wii ou téléphones", s: "Discussion #54 : comparatif et essai court avec une vraie manette", a: 2, b: 3, st: "todo" },
   { g: "tra", t: "Document d'architecture de l'avancée", s: "Mettre à jour docs/archi.png et docs/guide-du-code.md", a: 2, b: 3, st: "todo", create: true },
 
@@ -193,12 +193,12 @@ var ROWS = [
   { g: "cop", t: "Poser depuis le téléphone (accessibilité)", s: "#46", a: 0, b: 0, st: "done" },
   { g: "cop", t: "Réparer avec le pilote", s: "Bouton à maintenir en place ; l'alerte est dans la ligne pilote", a: 0, b: 0, st: "done" },
 
-  { g: "spe", t: "Cadrer le rôle spectateur", s: "Lecture seule, hors des quatre places, accès par QR · epic #53", a: 1, b: 2, st: "todo" },
-  { g: "spe", t: "Flux serveur vers spectateur en SSE", s: "État de la course en lecture seule", a: 2, b: 3, st: "todo", create: true },
-  { g: "spe", t: "Page spectateur : QR et vue globale", s: "Se connecter par QR, voir toute la course", a: 3, b: 4, st: "todo", create: true },
-  { g: "spe", t: "Choisir un point de vue", s: "Suivre une voiture en reprenant les vues du pilote", a: 4, b: 5, st: "todo", create: true },
-  { g: "spe", t: "Commenter par une émote", s: "SSE ne descend que dans un sens : envoi par requête HTTP, affichage sur la table", a: 4, b: 5, st: "todo", create: true },
-  { g: "spe", t: "Reconnexion et tests du spectateur", s: "Reprise automatique du flux, spectateur qui part ou arrive en course", a: 5, b: 5, st: "todo", create: true },
+  { g: "spe", t: "Cadrer le rôle spectateur", s: "#57 · Lecture seule, hors des quatre places, accès par QR · epic #53", a: 1, b: 2, st: "todo" },
+  { g: "spe", t: "Flux serveur vers spectateur en SSE", s: "#58 · État de la course en lecture seule", a: 2, b: 3, st: "todo" },
+  { g: "spe", t: "Page spectateur : QR et vue globale", s: "#59 · Se connecter par QR, voir toute la course", a: 3, b: 4, st: "todo" },
+  { g: "spe", t: "Choisir un point de vue", s: "#60 · Suivre une voiture en reprenant les vues du pilote", a: 4, b: 5, st: "todo" },
+  { g: "spe", t: "Commenter par une émote", s: "#61 · SSE ne descend que dans un sens : envoi par requête HTTP, affichage sur la table", a: 4, b: 5, st: "todo" },
+  { g: "spe", t: "Reconnexion et tests du spectateur", s: "#62 · Reprise automatique du flux, spectateur qui part ou arrive en course", a: 5, b: 5, st: "todo" },
 
   { g: "val", t: "Essai sur vrais téléphones et sur la table, puis fusion", s: "Epic #48, PR #36 du fork ; aucun essai matériel encore fait", a: 2, b: 2, st: "todo" },
   { g: "val", t: "Tests utilisateurs", s: "Réparation, facteur social, déconnexions · compte rendu dans #47", a: 5, b: 6, st: "todo" },
