@@ -2,7 +2,7 @@
 import type { GameState, Team } from '../../../server/types.js';
 import { actionButton } from '../../ui/press.js';
 import { PeripheralView } from './PeripheralView.js';
-import { FirstPersonView } from './FirstPersonView.js';
+import { PerspectiveView } from './PerspectiveView.js';
 import { RaceFrames } from './raceFrames.js';
 
 export class PilotViewport {
@@ -14,7 +14,9 @@ export class PilotViewport {
   private readonly status = document.createElement('p');
   private readonly frames = new RaceFrames();
   private readonly peripheral = new PeripheralView();
-  private readonly firstPerson = new FirstPersonView();
+  private readonly firstPerson = new PerspectiveView('first');
+  private readonly thirdPerson = new PerspectiveView('third');
+  steer = 0;
   private view = savedView();
   private slow = false;
   private frameStart = 0;
@@ -41,14 +43,14 @@ export class PilotViewport {
     description.className = 'view-caption';
     description.setAttribute('aria-live', 'polite');
     const view = actionButton('Vue', () => {
-      this.view = this.view === 'peripheral' ? 'first' : 'peripheral';
+      this.view = VIEWS[(VIEWS.indexOf(this.view) + 1) % VIEWS.length];
       try { sessionStorage.setItem('crashout-pilot-view', this.view); } catch { /* Choix en mémoire. */ }
       setViewLabel();
     });
     /** Indique le cadrage actuel et les réglages disponibles. */
     const setViewLabel = () => {
       framing.hidden = heading.hidden = this.view !== 'peripheral';
-      description.textContent = this.view === 'peripheral' ? 'Vue de dessus' : 'Première personne';
+      description.textContent = LABEL[this.view];
       this.canvas.setAttribute('aria-label', description.textContent);
       this.frameStart = this.frameCount = this.lastDraw = 0;
     };
@@ -84,7 +86,7 @@ export class PilotViewport {
   private draw = (frameTime: number): void => {
     this.raf = requestAnimationFrame(this.draw);
     if (!this.state || document.hidden) return;
-    const perspective = this.view === 'first';
+    const perspective = this.view !== 'peripheral';
     if (perspective) this.measure(frameTime);
     const ratio = Math.min(2, window.devicePixelRatio) * (perspective ? this.slow ? .5 : .75 : 1);
     const w = Math.round(this.canvas.clientWidth * ratio), h = Math.round(this.canvas.clientHeight * ratio);
@@ -94,7 +96,8 @@ export class PilotViewport {
     const now = this.state.phase === 'PAUSED' ? this.state.pausedAt : this.now();
     const poses = this.reducedMotion.matches ? this.state.cars : this.frames.poses(now);
     if (perspective) {
-      this.firstPerson.draw(this.context, w, h, this.state, poses, this.team, now, this.reducedMotion.matches, this.slow);
+      const view = this.view === 'first' ? this.firstPerson : this.thirdPerson;
+      view.draw(this.context, w, h, this.state, poses, this.team, now, this.reducedMotion.matches, this.slow, this.steer);
     } else {
       this.peripheral.draw(this.context, w, h, this.state, poses, this.team, now);
     }
@@ -125,8 +128,14 @@ export class PilotViewport {
   }
 }
 
+const VIEWS = ['peripheral', 'first', 'third'] as const;
+type View = typeof VIEWS[number];
+const LABEL: Record<View, string> = {
+  peripheral: 'Vue de dessus', first: 'Première personne', third: 'Troisième personne',
+};
+
 /** Récupère la vue préférée pour cet onglet. */
-function savedView(): 'peripheral' | 'first' {
-  try { return sessionStorage.getItem('crashout-pilot-view') === 'first' ? 'first' : 'peripheral'; }
+function savedView(): View {
+  try { return VIEWS.find(view => view === sessionStorage.getItem('crashout-pilot-view')) ?? 'peripheral'; }
   catch { return 'peripheral'; }
 }

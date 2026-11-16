@@ -46,3 +46,15 @@ const quad = [camera3d.local({ x: 0, y: -40 }), camera3d.local({ x: 50, y: -40 }
 assert.deepEqual(clipDepth(quad).map(p => p.depth), [20, 50, 50, 20]);
 assert.deepEqual([close, far].sort(farthestFirst).map(p => p.depth), [160, 80]);
 console.log('✓ Première personne : perspective, limites de caméra et tri en profondeur');
+
+const { chaseCamera, chaseCarY } = await import('../../client-phone/pilot/views/chaseCamera.js');
+for (const heading of [0, Math.PI / 3, Math.PI, Math.PI * 1.7]) {
+  const pos = { x: 50, y: 10 };
+  const camera = chaseCamera({ pos, angle: heading }, heading, null, false);
+  assert.ok(Math.abs((pos.x - camera.pos.x) * Math.cos(heading) + (pos.y - camera.pos.y) * Math.sin(heading) - 90) < 1e-8);
+  const p = new Projection(camera, 320, 180);
+  const y = chaseCarY(180, p.screen(p.local(pos))!.y);
+  assert.ok(y > 120 && y < 180);
+}
+assert.ok(chaseCamera({ pos: { x: 0, y: 0 }, angle: .5 }, 0, null, false).heading < .1);
+console.log('✓ Troisième personne : recul de la caméra, lissage et position de la voiture');

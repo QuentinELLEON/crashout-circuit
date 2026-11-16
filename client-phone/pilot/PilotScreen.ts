@@ -103,6 +103,7 @@ export class PilotScreen {
       throttle: pedal ? Math.max(Number(this.pedalHeld), sensor.throttle) : 1,
     };
     if (!shouldSendInput(now, input, this.last)) return;
+    this.viewport.steer = input.steer;
     this.input.steer(this.team, input.steer, input.throttle);
     this.last = { ...input, time: now };
   }
@@ -144,6 +145,7 @@ export class PilotScreen {
     this.right.release();
     this.pedal.release();
     this.repair.release();
+    this.viewport.steer = 0;
     this.input.steer(this.team, 0, 0);
     this.last = { time: -Infinity, steer: 0, throttle: 0 };
   };
