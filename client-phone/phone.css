@@ -40,3 +40,11 @@ button.choice small { margin-inline-start: auto; color: var(--muted); text-align
 [data-team="A"] { --accent: #71e9f4; }
 [data-team="B"] { --accent: #ff88b3; }
 .team-icon { color: var(--accent); font-size: 1.35rem; }
+
+[hidden] { display: none !important; }
+.pilot-screen, .pilot-direction, .pilot-settings { display: grid; gap: .75rem; }
+.pilot-direction, .pilot-settings { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); }
+.pilot-direction .hold { min-height: clamp(72px, 18dvh, 160px); }
+.hold { touch-action: none; user-select: none; -webkit-user-select: none; }
+.hold.held { color: #102026; background: var(--accent); border-color: var(--accent); }
+.pilot-screen .detail { min-height: 2.8em; margin: 0; }

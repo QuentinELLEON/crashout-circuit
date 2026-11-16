@@ -4,6 +4,8 @@
  */
 import { TEAM_LABEL, playerTeam, roleLabel, SEAT_IDS } from '../client-shared/seatLabels.js';
 import type { Phase, Seat, SeatId, Team } from '../server/types.js';
+import { PilotScreen } from './pilot/PilotScreen.js';
+import { actionButton as button } from './ui/press.js';
 import { PhoneSession } from './session.js';
 
 const title = document.querySelector<HTMLHeadingElement>('#title')!;
@@ -22,15 +24,7 @@ const WAITING: Record<Phase, string> = {
 let team: Team | null = null;
 let screenKey = '';
 
-/** Prépare un bouton tactile avec une action et un libellé. */
-function button(label: string, action: () => void, className = ''): HTMLButtonElement {
-  const el = document.createElement('button');
-  el.type = 'button';
-  el.className = className;
-  el.textContent = label;
-  el.addEventListener('click', action);
-  return el;
-}
+let pilot: PilotScreen | null = null;
 
 /** Ajoute un pictogramme et un statut textuel à un choix d'équipe ou de rôle. */
 function choice(label: string, icon: string, detail: string, color: Team, action: () => void, disabled: boolean) {
@@ -97,6 +91,10 @@ function showSeat(seat: SeatId, state: Phase): void {
   const selected = playerTeam(seat);
   document.body.dataset.team = selected;
   title.textContent = `${roleLabel(seat)} · Équipe ${TEAM_LABEL[selected]}`;
+  if (pilot) {
+    if (!screen.contains(pilot.root)) screen.replaceChildren(pilot.root);
+    return;
+  }
   const info = document.createElement('p');
   info.className = 'detail';
   info.textContent = WAITING[state];
@@ -112,7 +110,14 @@ function showSeat(seat: SeatId, state: Phase): void {
 function render(): void {
   if (notice.textContent !== session.notice) notice.textContent = session.notice;
   const { state, seat, room, online, pending } = session;
-  const key = JSON.stringify([room, team, online, seat, pending, seat ? state?.phase : state?.seats]);
+  if (state && seat?.endsWith('-pilot') && (state.phase === 'RACE' || state.phase === 'PAUSED')) {
+    pilot ??= new PilotScreen(session, playerTeam(seat));
+    pilot.update(state);
+  } else if (pilot) {
+    pilot.close();
+    pilot = null;
+  }
+  const key = JSON.stringify([room, team, online, session.canPlay, seat, pending, seat ? state?.phase : state?.seats]);
   if (key === screenKey) return;
   screenKey = key;
   delete document.body.dataset.team;
