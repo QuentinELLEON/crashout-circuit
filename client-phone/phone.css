@@ -56,3 +56,5 @@ button.choice small { margin-inline-start: auto; color: var(--muted); text-align
 .pilot-race-info { font-size: .95rem; font-weight: 650; }
 .pilot-viewport progress { width: 100%; accent-color: var(--accent); }
 .pilot-viewport .detail:empty { display: none; }
+.view-caption { flex: 1 1 100%; color: var(--muted); font-size: .9rem; }
+.pilot-viewport canvas.immobilized { filter: grayscale(1); }

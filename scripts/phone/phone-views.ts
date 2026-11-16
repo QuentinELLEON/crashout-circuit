@@ -31,3 +31,18 @@ assert.equal(builds, 1);
 layer.get({ ...state, trackVersion: 1 });
 assert.equal(builds, 2);
 console.log('✓ Vue périphérique : cadrage, conversion, interpolation et cache de géométrie');
+
+const { Projection, clipDepth, clipLineDepth, farthestFirst } = await import('../../client-phone/pilot/views/projection.js');
+const camera3d = new Projection({ pos: { x: 0, y: 0 }, heading: 0, height: 24, pitch: 0 }, 160, 100, 90);
+const close = camera3d.screen(camera3d.local({ x: 80, y: 16 }))!;
+assert.ok(Math.abs(close.x - 96) < 1e-8 && Math.abs(close.y - 64) < 1e-8);
+const far = camera3d.screen(camera3d.local({ x: 160, y: 16 }))!;
+assert.ok(close.scale > far.scale);
+assert.equal(camera3d.screen(camera3d.local({ x: -80, y: 0 })), null);
+const line = clipLineDepth(camera3d.local({ x: -20, y: 0 }), camera3d.local({ x: 800, y: 0 }))!;
+assert.deepEqual(line.map(p => p.depth), [20, 700]);
+const quad = [camera3d.local({ x: 0, y: -40 }), camera3d.local({ x: 50, y: -40 }),
+  camera3d.local({ x: 50, y: 40 }), camera3d.local({ x: 0, y: 40 })];
+assert.deepEqual(clipDepth(quad).map(p => p.depth), [20, 50, 50, 20]);
+assert.deepEqual([close, far].sort(farthestFirst).map(p => p.depth), [160, 80]);
+console.log('✓ Première personne : perspective, limites de caméra et tri en profondeur');
