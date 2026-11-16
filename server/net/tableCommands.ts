@@ -3,6 +3,7 @@
  * Liens : server/net/GameServer.ts, server/rules/GameRules.ts.
  */
 import type { ClientMessage, Team } from '../types.js';
+import { isPhoneStation } from '../tableStations.js';
 import type { GameRules } from '../rules/GameRules.js';
 
 /** Applique les commandes de préparation, de départ et de fin de séance. */
@@ -60,18 +61,21 @@ export function handleTableSession(rules: GameRules, msg: ClientMessage): void {
 export function handleTableGameplay(rules: GameRules, msg: ClientMessage): void {
   switch (msg.type) {
     case 'PilotInput':
-      if ((msg.team === 'A' || msg.team === 'B') && !rules.state.seats[`${msg.team}-pilot`].connected) {
+      if ((msg.team === 'A' || msg.team === 'B') && !isPhoneStation(rules.state, msg.team, 'pilot')) {
         rules.onPilotInput(msg.team, msg);
       }
       break;
     case 'Power':
-      if (msg.role === 'copilot' && (msg.team === 'A' || msg.team === 'B')) rules.onPower(msg.team, msg);
+      if (msg.role === 'copilot' && (msg.team === 'A' || msg.team === 'B') && !isPhoneStation(rules.state, msg.team, msg.role)) {
+        rules.onPower(msg.team, msg);
+      }
       break;
     case 'ToggleDriveMode':
       rules.toggleDriveMode(msg.team);
       break;
     case 'PadHold':
-      rules.onPadHold(msg);
+      if ((msg.team === 'A' || msg.team === 'B') && (msg.role === 'pilot' || msg.role === 'copilot')
+        && !isPhoneStation(rules.state, msg.team, msg.role)) rules.onPadHold(msg);
       break;
     case 'Slingshot':
       rules.onSlingshot(msg);

@@ -65,3 +65,4 @@ button.choice small { margin-inline-start: auto; color: var(--muted); text-align
 .tangible-cards article { padding: .85rem; border-radius: 12px; background: #18232e; }
 .tangible-cards h3, .tangible-cards p, .copilot-screen p { margin: 0 0 .45rem; }
 .tangible-cards article div { display: flex; flex-wrap: wrap; gap: .4rem; }
+.tutorial-lesson { border-left: 3px solid var(--accent); background: var(--card); padding: .6rem .75rem; margin: 0; }

@@ -3,6 +3,7 @@
  * Liens : client-phone/pilot/wheelSensor.ts, client-shared/controls.ts.
  */
 import type { GameState, Team } from '../../server/types.js';
+import { mobileLesson } from '../../client-shared/tutorialLessons.js';
 import { createControls } from '../../client-shared/controls.js';
 import { holdButton, actionButton } from '../ui/press.js';
 import type { PhoneSession } from '../session.js';
@@ -25,6 +26,7 @@ export class PilotScreen {
   private readonly viewport: PilotViewport;
   private readonly wheel = new WheelSensor();
   private readonly status = document.createElement('p');
+  private readonly lesson = document.createElement('p');
   private readonly input;
   private readonly sensor;
   private readonly calibrate;
@@ -57,12 +59,14 @@ export class PilotScreen {
     this.pedal = holdButton('Accélérer', held => { this.pedalHeld = held; });
     this.status.setAttribute('role', 'status');
     this.status.className = 'detail';
+    this.lesson.setAttribute('role', 'status');
+    this.lesson.className = 'tutorial-lesson';
     const settings = document.createElement('div');
     settings.className = 'pilot-settings';
     settings.append(this.sensor, this.calibrate, this.auto);
     this.direction.className = 'pilot-direction';
     this.direction.append(this.left.button, this.right.button);
-    this.root.append(this.viewport.root, this.status, this.direction, this.pedal.button, this.repair.button, settings);
+    this.root.append(this.lesson, this.viewport.root, this.status, this.direction, this.pedal.button, this.repair.button, settings);
     document.addEventListener('visibilitychange', this.onVisibility);
     window.addEventListener('pagehide', this.release);
     this.timer = window.setInterval(() => this.step(performance.now()), 1000 / 60);
@@ -73,6 +77,9 @@ export class PilotScreen {
   update(state: GameState): void {
     this.state = state;
     this.viewport.update(state, this.session.stateTime);
+    const lesson = mobileLesson(state, this.team, 'pilot');
+    if (lesson !== this.lesson.textContent) this.lesson.textContent = lesson;
+    this.lesson.hidden = !lesson;
     const active = this.session.canPlay && state.phase === 'RACE' && !document.hidden;
     if (this.active && !active) this.release();
     this.active = active;
@@ -115,8 +122,7 @@ export class PilotScreen {
     const calibrating = status === 'waiting' || status === 'calibrating';
     const pedal = this.state?.driveMode[this.team] === 'pedal';
     const hint = this.state?.phase === 'PAUSED' ? 'Partie en pause.'
-      : this.state?.tutorial?.steps[this.state.tutorial.teams[this.team].step] === 'identify'
-        ? 'Maintiens Réparer pour confirmer ton poste.' : instructions[status];
+      : instructions[status];
     if (this.status.textContent !== hint) this.status.textContent = hint;
     this.sensor.hidden = ready || calibrating;
     this.sensor.textContent = status === 'touch' ? 'Activer le volant' : 'Réessayer le capteur';

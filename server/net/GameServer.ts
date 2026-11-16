@@ -153,10 +153,6 @@ export class GameServer {
       return;
     }
     if (client.role === 'table') {
-      if (msg.type === 'PadHold') {
-        const seat = `${msg.team}-${msg.role}`;
-        if (isSeatId(seat)) this.mobilePads.delete(seat);
-      }
       handleTableSession(this.rules, msg);
       handleTableGameplay(this.rules, msg);
       return;
