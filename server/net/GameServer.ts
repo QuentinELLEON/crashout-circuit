@@ -11,6 +11,7 @@ import type {
   GameState,
   SeatId,
   JoinMsg,
+  RemotePlaceMsg,
   Phase,
   ClientMessage,
   ServerMessage,
@@ -26,6 +27,7 @@ import { PhysicsLoop } from '../PhysicsLoop.js';
 import { PlayerSeats, isSeatId } from '../rules/session/playerSeats.js';
 import { handlePlayerCommand, releasePlayerControls } from './playerCommands.js';
 import { handleTableSession, handleTableGameplay, releaseTableSteering } from './tableCommands.js';
+import { placeRemotely } from '../rules/gameplay/remotePlacement.js';
 import { handleOzCommand } from './ozCommands.js';
 
 /** Distingue les droits des connexions de table et de console opérateur. */
@@ -168,10 +170,30 @@ export class GameServer {
     }
     const seat = this.playerSeats.seatOf(client.id);
     if (!seat) return;
+    if (msg.type === 'RemotePlace') {
+      this.remotePlace(client, seat, msg);
+      return;
+    }
+    if (msg.type === 'SetAccessibility') {
+      if (seat.endsWith('-copilot') && typeof msg.on === 'boolean') {
+        this.state.seats[seat].accessible = msg.on;
+        this.broadcastTick();
+      }
+      return;
+    }
     const held = handlePlayerCommand(this.rules, seat, msg);
     if (msg.type !== 'PadHold' || typeof msg.on !== 'boolean') return;
     if (held) this.mobilePads.add(seat);
     else this.mobilePads.delete(seat);
+  }
+
+  /** Retourne le résultat de la pose à son auteur sans diffuser la réponse. */
+  private remotePlace(client: ConnectedClient, seat: SeatId, msg: RemotePlaceMsg): void {
+    if (!seat.endsWith('-copilot') || !Number.isSafeInteger(msg.requestId)) return;
+    const reason = placeRemotely(this.rules, seat, msg.target);
+    const t = Date.now(), requestId = msg.requestId;
+    this.sendTo(client.ws, reason ? { type: 'PlacementResult', t, requestId, ok: false, reason }
+      : { type: 'PlacementResult', t, requestId, ok: true });
   }
 
   /** Confirme ou refuse la demande d'une place sans diffuser le jeton de réservation. */

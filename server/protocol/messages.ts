@@ -4,13 +4,17 @@
  * Réexporté par server/types.ts, qui reste le point d'import unique des types partagés.
  */
 import type { TangibleId } from '../tangibles/tangibles.js';
-import type { Vec2, Team, Phase, ItemKind, Difficulty, TangiblePlacementMode, Tangible, GameState, SeatId } from './gameState.js';
+import type { Vec2, Team, Phase, ItemKind, Difficulty, TangiblePlacementMode, Tangible, GameState } from './gameState.js';
 
-/** Associe un type de commande à son horodatage réseau. */
-export interface BaseMsg {
-  type: string;
-  t: number; // timestamp ms
-}
+import type { BaseMsg } from './messageEnvelope.js';
+import type {
+  JoinMsg, LeaveMsg, JoinedMsg, JoinRejectedMsg, LeftMsg, SetAccessibilityMsg, RemotePlaceMsg, PlacementResultMsg,
+} from './playerMessages.js';
+export type { BaseMsg } from './messageEnvelope.js';
+export type {
+  JoinMsg, LeaveMsg, JoinedMsg, JoinRejectedMsg, LeftMsg, SetAccessibilityMsg,
+  RemotePlaceMsg, PlacementResultMsg, PlacementTarget, PlacementFailure,
+} from './playerMessages.js';
 
 // Table → Server
 /** Décrit le réglage de course dans le protocole partagé. */
@@ -197,39 +201,6 @@ export interface PingMsg extends BaseMsg {
   type: 'Ping';
 }
 
-// Séance des joueurs sur téléphone
-/** Demande une place ou reprend une réservation existante. */
-export interface JoinMsg extends BaseMsg {
-  type: 'Join';
-  room: string;
-  seat?: SeatId;
-  token?: string;
-  name?: string;
-}
-
-/** Confirme une place et transmet son jeton à la seule connexion concernée. */
-export interface JoinedMsg extends BaseMsg {
-  type: 'Joined';
-  seat: SeatId;
-  token: string;
-}
-
-/** Explique pourquoi une demande de place a été refusée. */
-export interface JoinRejectedMsg extends BaseMsg {
-  type: 'JoinRejected';
-  reason: 'seat-taken' | 'bad-token' | 'unknown-room' | 'room-full';
-}
-
-/** Demande de libérer son poste avant le départ. */
-export interface LeaveMsg extends BaseMsg {
-  type: 'Leave';
-}
-
-/** Confirme la libération du poste. */
-export interface LeftMsg extends BaseMsg {
-  type: 'Left';
-}
-
 // Server → All (broadcast)
 /** Décrit l’état de partie transmis aux interfaces dans le protocole partagé. */
 export interface StateMsg extends BaseMsg {
@@ -264,6 +235,8 @@ export interface PhaseChangeMsg extends BaseMsg {
 export type ClientMessage =
   | JoinMsg
   | LeaveMsg
+  | SetAccessibilityMsg
+  | RemotePlaceMsg
   | RaceSettingsMsg
   | StrokeDrawMsg
   | GenerateTrackMsg
@@ -296,4 +269,4 @@ export type ClientMessage =
   | TestToggleMsg;
 
 /** Réunit les états, phases et retours que les interfaces peuvent recevoir du serveur. */
-export type ServerMessage = StateMsg | FeedbackMsg | PhaseChangeMsg | PongMsg | JoinedMsg | JoinRejectedMsg | LeftMsg;
+export type ServerMessage = StateMsg | FeedbackMsg | PhaseChangeMsg | PongMsg | JoinedMsg | JoinRejectedMsg | LeftMsg | PlacementResultMsg;

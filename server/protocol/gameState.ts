@@ -21,6 +21,7 @@ export type SeatId = `${Team}-${'pilot' | 'copilot'}`;
 export interface Seat {
   taken: boolean;
   connected: boolean;
+  accessible?: boolean;
   name?: string;
 }
 /** Nomme les écrans et les états de session partagés par les clients. */

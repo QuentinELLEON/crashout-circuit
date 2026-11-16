@@ -5,7 +5,7 @@
 import { connectWs, StateSync, type Connection } from '../client-shared/net.js';
 import { readSession } from '../client-shared/sessionInfo.js';
 import { SEAT_IDS } from '../client-shared/seatLabels.js';
-import type { GameState, JoinRejectedMsg, SeatId, ServerMessage } from '../server/types.js';
+import type { GameState, JoinRejectedMsg, PlacementResultMsg, PlacementTarget, SeatId, ServerMessage } from '../server/types.js';
 
 const STORAGE = 'crashout-player';
 const REJECTION: Record<JoinRejectedMsg['reason'], string> = {
@@ -22,6 +22,8 @@ export class PhoneSession {
   private reservation: Reservation | null = null;
   private generation = 0;
   private confirmed = false;
+  private placementId = 0;
+  lastPlacement: PlacementResultMsg | null = null;
   readonly sync = new StateSync();
   state: GameState | null = null;
   stateTime = 0;
@@ -76,6 +78,14 @@ export class PhoneSession {
   /** Envoie une commande de jeu au serveur de la place attribuée. */
   send(msg: { type: string } & Record<string, unknown>): void {
     if (this.canPlay) this.conn?.send(msg);
+  }
+
+  /** Envoie une pose accessible et donne sa référence pour le retour privé. */
+  requestPlacement(target: PlacementTarget): number | null {
+    if (!this.canPlay) return null;
+    const requestId = ++this.placementId;
+    this.send({ type: 'RemotePlace', target, requestId });
+    return requestId;
   }
 
   /** Envoie la demande de place après le choix de l'équipe et du rôle. */
@@ -142,6 +152,9 @@ export class PhoneSession {
         this.seat = msg.seat;
         this.notice = '';
         this.saveReservation({ room: this.room, seat: msg.seat, token: msg.token });
+        break;
+      case 'PlacementResult':
+        this.lastPlacement = msg;
         break;
       case 'Left':
         this.confirmed = false;

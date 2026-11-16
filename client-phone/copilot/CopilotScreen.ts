@@ -6,6 +6,7 @@ import { createControls } from '../../client-shared/controls.js';
 import { armedPickup } from '../../server/rules/armedPickup.js';
 import { actionButton, holdButton } from '../ui/press.js';
 import type { PhoneSession } from '../session.js';
+import { AccessiblePlacement } from './AccessiblePlacement.js';
 import { TangibleCards } from './TangibleCards.js';
 
 export class CopilotScreen {
@@ -16,6 +17,7 @@ export class CopilotScreen {
   private readonly power;
   private readonly repair;
   private readonly tangibles;
+  private readonly accessible;
   private ready = false;
 
   constructor(private readonly session: PhoneSession, private readonly seat: SeatId) {
@@ -30,7 +32,8 @@ export class CopilotScreen {
     this.progress.max = 1;
     this.progress.setAttribute('aria-label', 'Progression de la réparation');
     this.tangibles = new TangibleCards(session, seat);
-    this.root.append(this.lesson, this.stock, this.power, this.repair.button, this.progress, this.tangibles.root);
+    this.accessible = new AccessiblePlacement(session, seat);
+    this.root.append(this.lesson, this.stock, this.power, this.repair.button, this.progress, this.accessible.root, this.tangibles.root);
     document.addEventListener('visibilitychange', this.onVisibility);
     window.addEventListener('pagehide', this.repair.release);
   }
@@ -56,6 +59,7 @@ export class CopilotScreen {
     this.repair.button.disabled = !canPlay;
     if (!canPlay) this.repair.release();
     this.progress.value = state.repairProgress[team];
+    this.accessible.update(state, canPlay);
     this.tangibles.update(state, canPlay);
   }
 
