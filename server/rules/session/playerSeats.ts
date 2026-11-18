@@ -63,10 +63,22 @@ export class PlayerSeats {
   /** Libère immédiatement la place de la connexion avant le départ de la course. */
   leave(owner: symbol, phase: Phase): SeatId | undefined {
     if (phase !== 'LOBBY' && phase !== 'SETUP' && phase !== 'MAP' && phase !== 'READY') return;
+    return this.release(owner);
+  }
+
+  /** Rend la place immédiatement disponible, indépendamment de la phase. */
+  release(owner: symbol): SeatId | undefined {
     const seat = this.seatOf(owner);
     if (!seat) return;
     this.free(seat);
     return seat;
+  }
+
+  /** Révoque une place connectée ou réservée et renvoie la connexion qu’elle utilisait. */
+  revoke(seat: SeatId): symbol | null {
+    const owner = this.reservations.get(seat)?.owner ?? null;
+    this.free(seat);
+    return owner;
   }
 
   /** Libère un poste à la demande de la table et renvoie la connexion qui le tenait, s'il y en avait une. */

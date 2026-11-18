@@ -81,6 +81,7 @@ export function resetToLobby(rules: GameRules): void {
   s.mapStrokes = { A: false, B: false };
   s.mapMode = null;
   s.sessionMode = 'race';
+  s.wideTable = false;
   s.soloTest = rules.soloByDefault;
   s.raceDeadline=0;
   rules.automaticPilot.reset();

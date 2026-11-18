@@ -4,6 +4,7 @@
  */
 import { TEAM_LABEL, playerTeam, roleLabel, SEAT_IDS } from '../client-shared/seatLabels.js';
 import type { Phase, Seat, SeatId, Team } from '../server/types.js';
+import { CopilotScreen } from './copilot/CopilotScreen.js';
 import { PilotScreen } from './pilot/PilotScreen.js';
 import { actionButton as button } from './ui/press.js';
 import { PhoneSession } from './session.js';
@@ -13,12 +14,11 @@ const notice = document.querySelector<HTMLParagraphElement>('#notice')!;
 const screen = document.querySelector<HTMLElement>('#screen')!;
 const params = new URLSearchParams(location.search);
 const initial = params.get('room') ?? '';
-/** Poste annoncé par le QR code de la table (`?seat=A-pilot`) ; toute autre valeur est ignorée. */
 const wanted = SEAT_IDS.find(id => id === params.get('seat')) ?? null;
 const session = new PhoneSession(render, wanted);
 const WAITING: Record<Phase, string> = {
-  LOBBY: 'En attente du départ sur la table.',
   SETUP: 'Votre poste est réservé. Attendez le départ sur la table.',
+  LOBBY: 'En attente du départ sur la table.',
   MAP: 'Les équipes dessinent le circuit sur la table.',
   READY: 'Le circuit est prêt. Attendez le départ sur la table.',
   RACE: 'Partie en cours.',
@@ -28,7 +28,8 @@ const WAITING: Record<Phase, string> = {
 let team: Team | null = null;
 let screenKey = '';
 
-let pilot: PilotScreen | null = null;
+let pilot: PilotScreen | CopilotScreen | null = null;
+let activeSeat: SeatId | null = null;
 
 /** Ajoute un pictogramme et un statut textuel à un choix d'équipe ou de rôle. */
 function choice(label: string, icon: string, detail: string, color: Team, action: () => void, disabled: boolean) {
@@ -85,7 +86,7 @@ function roles(seats: Record<SeatId, Seat>, selected: Team, enabled: boolean): H
   const choices = SEAT_IDS.filter(id => playerTeam(id) === selected).map(id => {
     const detail = seats[id].connected ? 'Pris' : seats[id].taken ? 'Réservé' : 'Libre';
     return choice(roleLabel(id), id.endsWith('-pilot') ? '◈' : '✚', detail, selected,
-      () => session.join(id), !enabled || seats[id].taken);
+      () => session.join(id), !enabled || seats[id].taken || session.state?.phase === 'SETUP' && session.state.seatDevices[id] !== 'phone');
   });
   return [...choices, button('Changer d’équipe', () => { team = null; render(); })];
 }
@@ -110,12 +111,15 @@ function showSeat(seat: SeatId, state: Phase): void {
 function render(): void {
   if (notice.textContent !== session.notice) notice.textContent = session.notice;
   const { state, seat, room, online, pending } = session;
-  // Le pilote a ses commandes dès qu'il a scanné son QR code : il peut essayer la direction avant le départ.
-  if (seat?.endsWith('-pilot') && state) {
-    if (!pilot) {
+  if (seat && state && (seat.endsWith('-pilot') || ['RACE', 'PAUSED'].includes(state.phase))) {
+    if (!pilot || activeSeat !== seat) {
+      pilot?.close();
+      activeSeat = seat;
       const team = playerTeam(seat);
-      pilot = new PilotScreen(session, team, state.soloTest, params.get('keyboard') === '1' && state.soloTest && state.developerTools);
-      title.textContent = state.soloTest ? 'Pilote solo' : `Pilote · Équipe ${TEAM_LABEL[team]}`;
+      pilot = seat.endsWith('-pilot')
+        ? new PilotScreen(session, team, state.soloTest, params.get('keyboard') === '1' && state.soloTest && state.developerTools)
+        : new CopilotScreen(session, seat);
+      title.textContent = state.soloTest ? 'Pilote solo' : `${roleLabel(seat)} · Équipe ${TEAM_LABEL[team]}`;
       document.body.dataset.team = team;
       screen.replaceChildren(pilot.root);
     }
@@ -125,9 +129,10 @@ function render(): void {
   if (pilot) {
     pilot.close();
     pilot = null;
+    activeSeat = null;
     screenKey = '';
   }
-  const key = JSON.stringify([room, team, online, seat, pending, state?.soloTest, state?.developerTools, seat ? state?.phase : state?.seats]);
+  const key = JSON.stringify([room, team, online, seat, pending, session.gyroUrl, state?.soloTest, state?.developerTools, state?.seatDevices, seat ? state?.phase : state?.seats]);
   if (key === screenKey) return;
   screenKey = key;
   delete document.body.dataset.team;
@@ -137,9 +142,6 @@ function render(): void {
   } else if (!state) {
     title.textContent = 'Connexion à la séance';
     screen.replaceChildren();
-  } else if (!seat && wanted && pending === 'join') {
-    title.textContent = 'Connexion à votre poste…';
-    screen.replaceChildren();
   } else if (seat) {
     showSeat(seat, state.phase);
   } else if (state.soloTest) {
@@ -147,12 +149,12 @@ function render(): void {
     const taken = state.seats['A-pilot'].taken;
     screen.replaceChildren(choice('Rejoindre comme pilote', '◈', taken ? 'Réservé' : 'Libre', 'A',
       () => session.join('A-pilot'), taken || !online || pending !== null));
-    if (state.developerTools && params.get('keyboard') !== '1' && matchMedia('(any-pointer: fine)').matches) {
-      const pc = document.createElement('a');
-      pc.href = '/play?room=' + room + '&keyboard=1';
-      pc.className = 'spectator-link';
-      pc.textContent = 'Essai cockpit au clavier';
-      screen.append(pc);
+    if (state.developerTools) {
+      const tests = document.createElement('a');
+      tests.href = '/test';
+      tests.className = 'spectator-link';
+      tests.textContent = 'Tous les modes de test';
+      screen.append(tests);
     }
   } else if (team) {
     document.body.dataset.team = team;
@@ -161,6 +163,22 @@ function render(): void {
   } else {
     title.textContent = 'Choisir une équipe';
     screen.replaceChildren(...teams(state.seats, online));
+  }
+  if (room && !seat && !team && session.gyroUrl && params.get('keyboard') !== '1') {
+    const details = document.createElement('details');
+    details.className = 'gyro-access';
+    const label = document.createElement('summary');
+    label.textContent = 'Utiliser le gyroscope';
+    const description = document.createElement('p');
+    description.textContent = 'Ouvre le lien sécurisé avant de choisir ta place. Au premier accès, le téléphone doit approuver le certificat local.';
+    const cert = document.createElement('a');
+    cert.href = '/certificat-local.cer';
+    cert.textContent = 'Télécharger le certificat local';
+    const secure = document.createElement('a');
+    secure.href = session.gyroUrl;
+    secure.textContent = 'Ouvrir le jeu en HTTPS';
+    details.append(label, description, cert, secure);
+    screen.append(details);
   }
   if (room && session.canWatch && !seat && !team) {
     const watch = document.createElement('a');
@@ -173,4 +191,9 @@ function render(): void {
 
 document.addEventListener('visibilitychange', () => { if (!document.hidden) session.resume(); });
 render();
-if (initial) void session.open(initial);
+void session.open(initial);
+
+window.addEventListener('pagehide', () => session.suspend());
+window.addEventListener('pageshow', event => {
+  if (event.persisted && session.room) void session.open(session.room);
+});

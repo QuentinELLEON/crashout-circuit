@@ -21,7 +21,6 @@ export function startSoloRace(rules: GameRules): void {
     state.soloTest = true;
   }
   if (!['LOBBY', 'RACE', 'PAUSED', 'RESULT'].includes(state.phase)) return;
-  state.driveMode.A = 'auto';
   state.mapMode = 'table';
   rules.startRace();
 }

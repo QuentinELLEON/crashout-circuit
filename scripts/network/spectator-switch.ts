@@ -52,7 +52,7 @@ try {
   assert.equal(opened.status, 200);
   assert.deepEqual(await opened.json(), { spectators: true });
   const cookie = opened.headers.get('set-cookie')!.split(';')[0];
-  assert.match(cookie, /^crashout-host=[a-f0-9]+$/);
+  assert.match(cookie, /^crashout-host-[a-f0-9]{10}=[a-f0-9]+$/);
   assert.equal((await session()).spectators, true);
   assert.equal((await fetch(new URL('/watch?room=' + room, base))).status, 200);
   assert.equal((await fetch(base)).status, 401, 'ouvert : la table exige le lien privé');

@@ -121,11 +121,13 @@ export class GameServer {
     this.clients.delete(client);
     console.log(`[GameServer] Client disconnected: ${client.role} (total: ${this.clients.size})`);
     if (client.role === 'player') {
-      const seat = this.playerSeats.disconnect(client.id, this.state.phase, Date.now());
+      const seat = this.state.soloTest
+        ? this.playerSeats.release(client.id)
+        : this.playerSeats.disconnect(client.id, this.state.phase, Date.now());
       if (seat) {
         this.mobilePads.delete(seat);
         releasePlayerControls(this.rules, seat);
-        this.broadcastTick();
+        this.afterPlayerDeparture();
       }
       return;
     }
@@ -152,10 +154,6 @@ export class GameServer {
       return;
     }
     if (client.role === 'table') {
-      if (msg.type === 'PadHold') {
-        const seat = `${msg.team}-${msg.role}`;
-        if (isSeatId(seat)) this.mobilePads.delete(seat);
-      }
       handleTableSession(this.rules, msg);
       handleTableGameplay(this.rules, msg);
       if (msg.type === 'SetSeatDevice') this.evictIfOnTable(msg.seat);
@@ -223,13 +221,45 @@ export class GameServer {
 
   /** Libère une place à la demande du joueur si la course n'a pas commencé. */
   private leavePlayer(client: ConnectedClient): void {
-    const seat = this.playerSeats.leave(client.id, this.state.phase);
+    const seat = this.state.soloTest ? this.playerSeats.release(client.id) : this.playerSeats.leave(client.id, this.state.phase);
     if (!seat) return;
     this.mobilePads.delete(seat);
     releasePlayerControls(this.rules, seat);
     this.sendTo(client.ws, { type: 'Left', t: Date.now() });
+    this.afterPlayerDeparture();
+  }
+
+  private afterPlayerDeparture(): void {
+    if (this.state.soloTest) {
+      this.state.driveMode.A = 'auto';
+      if (this.state.phase !== 'LOBBY') { this.rules.resetToLobby(); return; }
+    }
     this.broadcastTick();
   }
+
+  kickSeat(seat: SeatId): void {
+    this.revokeSeat(seat);
+    this.afterPlayerDeparture();
+  }
+
+  resetLobby(): void {
+    for (const key of Object.keys(this.state.seats)) if (isSeatId(key)) this.revokeSeat(key);
+    if (this.state.soloTest) this.state.driveMode.A = 'auto';
+    this.rules.resetToLobby();
+  }
+
+  private revokeSeat(seat: SeatId): void {
+    const owner = this.playerSeats.revoke(seat);
+    this.mobilePads.delete(seat);
+    releasePlayerControls(this.rules, seat);
+    const client = [...this.clients].find(candidate => candidate.id === owner);
+    if (client) {
+      this.sendTo(client.ws, { type: 'Left', t: Date.now() });
+      client.ws.close(1000, 'Place libérée par l’administration');
+    }
+  }
+
+  applyHostCommand(msg: ClientMessage): void { handleTableSession(this.rules, msg); }
 
   /** Change la phase et avertit tous les clients de la transition. */
   transitionTo(phase: Phase, data?: unknown): void {

@@ -35,6 +35,7 @@ export class PhoneSession {
   room = '';
   online = false;
   canWatch = false;
+  gyroUrl = '';
   pending: 'join' | 'leave' | null = null;
   notice = '';
 
@@ -42,10 +43,10 @@ export class PhoneSession {
   constructor(private readonly refresh: () => void, private wantedSeat: SeatId | null = null) {}
 
   /** Valide un code, ouvre la connexion et reprend la réservation de cet onglet si possible. */
-  async open(raw: string): Promise<void> {
-    const room = raw.trim().toUpperCase();
+  async open(raw = ''): Promise<void> {
+    let room = raw.trim().toUpperCase();
     this.notice = '';
-    if (!/^[A-HJ-NP-Z2-9]{5}$/.test(room)) {
+    if (room && !/^[A-HJ-NP-Z2-9]{5}$/.test(room)) {
       this.notice = 'Saisissez le code à cinq caractères affiché sur la table.';
       this.refresh();
       return;
@@ -53,6 +54,9 @@ export class PhoneSession {
 
     const generation = ++this.generation;
     this.canWatch = false;
+    this.gyroUrl = '';
+    this.online = false;
+    this.confirmed = false;
     this.conn?.close();
     this.notice = 'Connexion à la séance…';
     this.refresh();
@@ -60,10 +64,20 @@ export class PhoneSession {
       const info = await readSession();
       if (generation !== this.generation) return;
       this.canWatch = info.spectators === true;
-      if (info.room !== room) {
+      if (room && info.room !== room && !info.localNetwork) {
         this.notice = REJECTION['unknown-room'];
         this.refresh();
         return;
+      }
+      room = info.room;
+      if (info.localNetwork && location.protocol === 'http:') {
+        const choices = info.secureBaseUrls ?? [];
+        const secure = choices.find(base => new URL(base).hostname === location.hostname) ?? choices[0];
+        if (secure) {
+          const link = new URL('/play?room=' + room, secure);
+          if (this.wantedSeat) link.searchParams.set('seat', this.wantedSeat);
+          this.gyroUrl = link.href;
+        }
       }
     } catch {
       if (generation !== this.generation) return;
@@ -72,12 +86,40 @@ export class PhoneSession {
       return;
     }
 
+    if (this.room !== room) {
+      this.seat = null;
+      this.confirmed = false;
+      this.state = null;
+    }
     this.room = room;
     this.reservation = this.loadReservation();
+    this.resumeSecureLink();
     const next = new URL(location.href);
     next.searchParams.set('room', room);
     history.replaceState(null, '', next);
     this.connect(generation);
+  }
+
+  /** Transmet la réservation au passage HTTP → HTTPS, dans le fragment jamais envoyé au serveur HTTP. */
+  get secureJoinUrl(): string {
+    if (!this.gyroUrl) return '';
+    const link = new URL(this.gyroUrl);
+    const seat = this.reservation?.seat ?? this.wantedSeat;
+    if (seat) link.searchParams.set('seat', seat);
+    link.searchParams.set('input', 'gyro');
+    if (this.reservation) link.hash = new URLSearchParams({ resume: this.reservation.token }).toString();
+    return link.href;
+  }
+
+  /** Reprend le poste dans la nouvelle origine puis efface immédiatement le jeton de l'adresse. */
+  private resumeSecureLink(): void {
+    if (location.protocol !== 'https:') return;
+    const token = new URLSearchParams(location.hash.slice(1)).get('resume');
+    if (!token) return;
+    if (this.wantedSeat && /^[a-f0-9-]{36}$/i.test(token)) {
+      this.saveReservation({ room: this.room, seat: this.wantedSeat, token });
+    }
+    history.replaceState(null, '', location.pathname + location.search);
   }
 
   /** Vérifie que le serveur a confirmé le poste sur la connexion en cours. */
@@ -182,6 +224,18 @@ export class PhoneSession {
         return;
     }
     this.refresh();
+  }
+
+  /** Ferme le transport sur une vraie sortie de page et libère le pilote de test. */
+  suspend(): void {
+    if (this.state?.soloTest) this.saveReservation(null);
+    this.generation++;
+    this.conn?.close();
+    this.conn = null;
+    this.online = false;
+    this.confirmed = false;
+    this.pending = null;
+    this.seat = null;
   }
 
   /** Retourne à la saisie du code si le serveur a redémarré. */

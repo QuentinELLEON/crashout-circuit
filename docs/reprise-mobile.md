@@ -69,3 +69,32 @@ CRASHOUT_SOLO_TEST=1 CRASHOUT_DEV_TOOLS=1 CRASHOUT_SPECTATORS=1 CRASHOUT_TLS_KEY
 - **Spectateur**. Ouvrir le lien annoncé par le serveur dans un autre onglet ou sur un deuxième appareil. Choisir **Circuit entier**, **Survol** ou **Poursuite plongeante**. En partie à deux équipes, choisir la voiture cyan ou rose. Utiliser une fenêtre distincte pour garder le jeu clavier au premier plan pendant l’observation.
 
 Grand Prix est le thème initial de l’essai solo. L’ambiance de la table se propage aux autres écrans pendant la course. Le navigateur charge le module 3D à la première utilisation. Si WebGL 2 est indisponible, la carte 2D reste accessible. Les cibles de fluidité sur Safari iPhone et Chrome Android se mesurent sur appareils physiques.
+
+### Tableau de bord du pilote et ambiances
+
+Le [menu des essais locaux](http://localhost:3000/test) réunit la table, le pilote mobile, le pilote clavier et le spectateur. Un seul appareil prend la place solo. **Quitter l’essai** ou fermer l’onglet libère immédiatement la place et ramène le salon à l’accueil. Les places de la session standard gardent leur délai de reconnexion.
+
+En mode **Avance auto**, le gyroscope dirige la voiture en paysage. **Mode pédale** donne accès à deux boutons de braquage et à une commande d’accélération. Le gyroscope reste utilisable dans ce mode. Le volant central suit la commande de direction et le cockpit occupe tout le cadre du navigateur. **Réglages** donne accès au plein écran natif quand le navigateur le propose, au recalibrage et, en essai solo, au choix de l’ambiance.
+
+Pour comparer les thèmes, change d’ambiance dans **Réglages** pendant une course, puis passe en poursuite pour regarder le décor. Les objets animés restent dans des emplacements extérieurs à la chaussée, les nuances de bordure suivent la géométrie du serveur et les effets d’ambiance s’atténuent avec la préférence de mouvement réduit ou la baisse de qualité.
+
+## Salon à plusieurs et accès hôte
+
+Au démarrage sans `CRASHOUT_SOLO_TEST`, la table présente **Tutoriel** et **Course**. Dans ses réglages, **Course rapide** lance le circuit prédéfini. Les téléphones rejoignent la même instance depuis le QR affiché par la table. Chacun choisit une équipe et un rôle. Seuls les postes physiques sans téléphone restent affichés en partie mixte. Quand les quatre postes sont connectés au moment de préparer le circuit, la table retire les panneaux et réserve une surface agrandie pour la manche.
+
+Le pilote mobile choisit **Direction · Pédales** ou **Direction · Gyroscope** dans ses réglages. Le volant s’affiche dans le cockpit. Le copilote arme le bonus et maintient son bouton de réparation. Les gestes de bonus et la pose annoncée des tangibles se font sur la table.
+
+Le lien privé **Administration** imprimé dans Terminal ouvre les réglages du salon desservi par cette adresse. **Retour à l’accueil** conserve les joueurs connectés. **Réinitialiser le salon** libère les places et conserve le QR. **Déconnecter** libère une place, y compris une réservation hors ligne. Les instances utilisent des accès hôte distincts.
+
+Exemple de lancement sur deux ports HTTPS, après `npm run build` et avec les chemins de certificats définis dans le terminal. La première instance est le salon à plusieurs et la deuxième est l’essai solo avec son menu `/test`.
+
+```bash
+PORT=3444 CRASHOUT_SPECTATORS=1 npm start
+PORT=3443 CRASHOUT_SPECTATORS=1 CRASHOUT_SOLO_TEST=1 CRASHOUT_DEV_TOOLS=1 npm start
+```
+
+### Lancement local avec QR tolérant aux changements de Wi-Fi
+
+Depuis le dossier du projet, reconstruire avec `npm run build`, puis lancer `npm run start:local` dans un terminal interactif. La table, Oz et l'administration sont accessibles depuis l'ordinateur hôte aux adresses `http://localhost:3001/`, `http://localhost:3001/oz` et `http://localhost:3001/admin`. Pour l'essai solo, `npm run start:local-solo` ouvre une autre session sur le port 3000, avec le menu `/test`.
+
+Le QR de la table pointe vers l'adresse HTTP du réseau courant. Les joueurs sur le même réseau rejoignent et peuvent utiliser les pédales directement. Pour le gyroscope, ouvrir **Utiliser le gyroscope** avant de réserver sa place, installer le certificat local si nécessaire, puis suivre **Ouvrir le jeu en HTTPS**. L'autorité locale est conservée sous `~/.local/share/crashout-circuit/authority`. Le certificat HTTPS s'adapte aux nouvelles adresses et la table actualise le QR sur l'accueil. En cas de changement de Wi-Fi, rescanner le QR affiché. Recharger une interface ou relancer une partie conserve le salon du serveur.

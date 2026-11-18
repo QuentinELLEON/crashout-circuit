@@ -51,8 +51,10 @@ try {
   pilot.ws.terminate();
   await until(() => state.seats['A-pilot'].connected ? undefined : true, 'Le poste doit passer hors ligne');
   const resumed = await client('player');
-  resumed.send({ type: 'Join', token });
+  resumed.send({ type: 'Join', seat: 'A-pilot' });
   assert.equal((await resumed.receive('Joined')).seat, 'A-pilot');
+  assert.equal(state.phase, 'LOBBY');
+  assert.equal(state.seats['A-pilot'].connected, true);
   const previousTrack = state.trackVersion;
   resumed.send({ type: 'StartSolo' });
   await resumed.flush();

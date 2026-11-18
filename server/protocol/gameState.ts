@@ -37,7 +37,7 @@ export type DriveMode = 'auto' | 'pedal';
 /** Distingue la pose calculée par les contacts de la pose manuelle sur la carte Oz. */
 export type TangiblePlacementMode = 'manual' | 'touch';
 /** Décrit l’annonce de pose avec son objet, son jeton unique et son expiration. */
-export interface TangiblePlacementRequest { id: TangibleId; token: number; expiresAt: number }
+export interface TangiblePlacementRequest { id: TangibleId; token: number; expiresAt: number; by?: SeatId }
 
 /** Conserve la pose et l’activation d’un objet réel indépendamment des effets qu’il produit. */
 export interface Tangible {
@@ -259,6 +259,8 @@ export interface GameState {
   /** Driving scheme selected independently by each pilot. */
   driveMode: Record<Team, DriveMode>;
   seats: Record<SeatId, Seat>;
+  /** Circuit élargi réservé au début de la manche lorsque les quatre joueurs sont sur téléphone. */
+  wideTable: boolean;
   /** Appareil annoncé pour chaque poste sur l'écran de préparation ; l'occupation réelle reste dans `seats`. */
   seatDevices: Record<SeatId, SeatDevice>;
   /** Numéro (1 à 4, selon l'ordre de connexion) de la manette Wii branchée à la table pour le pilote de l'équipe ; null sans manette. */

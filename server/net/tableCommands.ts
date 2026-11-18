@@ -4,6 +4,8 @@
  */
 import type { ClientMessage, Team } from '../types.js';
 import { isThemeId } from '../protocol/theme.js';
+import { generatePreset } from '../track/MapGenerator.js';
+import { lockTableFormat, playAreaFor, isPhoneStation } from '../tableStations.js';
 import type { GameRules } from '../rules/GameRules.js';
 
 /** Applique les commandes de préparation, de départ et de fin de séance. */
@@ -20,6 +22,13 @@ export function handleTableSession(rules: GameRules, msg: ClientMessage): void {
   switch (msg.type) {
     case 'RaceSettings':
       rules.updateRaceSettings(msg);
+      break;
+    case 'StartPreset':
+      if (phase === 'LOBBY') {
+        lockTableFormat(rules.state);
+        rules.state.mapMode = 'table';
+        rules.startRace(generatePreset(playAreaFor(rules.state)));
+      }
       break;
     case 'StartGame':
       // La course à la table passe par la préparation des postes ; le clavier de développement l'ignore.
@@ -80,19 +89,21 @@ export function handleTableGameplay(rules: GameRules, msg: ClientMessage): void 
   if (rules.state.soloTest) return;
   switch (msg.type) {
     case 'PilotInput':
-      if ((msg.team === 'A' || msg.team === 'B') && !rules.state.seats[`${msg.team}-pilot`].connected) {
+      if ((msg.team === 'A' || msg.team === 'B') && !isPhoneStation(rules.state, msg.team, 'pilot')) {
         rules.onPilotInput(msg.team, msg);
       }
       break;
     case 'Power':
-      if (msg.role === 'copilot' && (msg.team === 'A' || msg.team === 'B')) rules.onPower(msg.team, msg);
+      if (msg.role === 'copilot' && (msg.team === 'A' || msg.team === 'B') && !isPhoneStation(rules.state, msg.team, msg.role)) {
+        rules.onPower(msg.team, msg);
+      }
       break;
     case 'ToggleDriveMode':
       rules.toggleDriveMode(msg.team);
       break;
     case 'PadHold':
-      // Le bouton de réparation d'un pilote connecté par téléphone se trouve sur son téléphone, pas sur la table.
-      if (!(msg.role === 'pilot' && (msg.team === 'A' || msg.team === 'B') && rules.state.seats[`${msg.team}-pilot`].connected)) rules.onPadHold(msg);
+      if ((msg.team === 'A' || msg.team === 'B') && (msg.role === 'pilot' || msg.role === 'copilot')
+        && !isPhoneStation(rules.state, msg.team, msg.role)) rules.onPadHold(msg);
       break;
     case 'Slingshot':
       rules.onSlingshot(msg);
